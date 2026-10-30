@@ -1,0 +1,11 @@
+<RCC>
+    <qresource prefix="/">
+        <file>qml/Main.qml</file>
+        <file>qml/components/MaterialIcon.qml</file>
+        <file>qml/components/IconButton.qml</file>
+        <file>qml/components/SidePlace.qml</file>
+        <file>qml/components/AnchorPopup.qml</file>
+        <file>qml/components/FileRow.qml</file>
+        <file>data/seeker.svg</file>
+    </qresource>
+</RCC>

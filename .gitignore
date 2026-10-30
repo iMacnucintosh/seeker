@@ -1,0 +1,8 @@
+*.o
+moc_*
+qrc_*
+Makefile
+.qmake.stash
+seeker
+*.pro.user
+build/

@@ -1,0 +1,24 @@
+[Desktop Entry]
+Name=Archivos
+Name[en]=Files
+GenericName=File Manager
+GenericName[es]=Gestor de archivos
+Comment=Seeker — Material You file manager for Sylphrena
+Comment[es]=Seeker — explorador Material You para Sylphrena
+Exec=seeker %U
+Icon=seeker
+Terminal=false
+Type=Application
+StartupNotify=true
+Categories=System;FileTools;FileManager;Core;
+MimeType=inode/directory;
+Keywords=files;folders;explorer;seeker;archivos;
+Actions=NewWindow;
+StartupWMClass=seeker
+X-Seeker-ProductName=Seeker
+
+[Desktop Action NewWindow]
+Name=New Window
+Name[es]=Nueva ventana
+Exec=seeker --new-window
+Icon=seeker
