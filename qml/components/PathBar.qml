@@ -23,6 +23,27 @@ Rectangle {
     property bool suppressBlurClose: false
 
     readonly property bool suggestOpen: editing && suggestions.length > 0
+    /// -1 = atrás, +1 = adelante (rueda del ratón sobre la barra).
+    signal historyStepRequested(int direction)
+
+    HoverHandler {
+        id: barHover
+        enabled: !root.editing
+    }
+    WheelHandler {
+        enabled: !root.editing && barHover.hovered
+        acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+        onWheel: (event) => {
+            const dy = event.angleDelta.y
+            const dx = event.angleDelta.x
+            // Vertical: up → forward; horizontal: left → forward (trackpad).
+            if (dy > 0 || dx < 0)
+                root.historyStepRequested(1)
+            else if (dy < 0 || dx > 0)
+                root.historyStepRequested(-1)
+            event.accepted = true
+        }
+    }
 
     function beginEdit() {
         editing = true

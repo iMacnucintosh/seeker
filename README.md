@@ -10,7 +10,8 @@ Explorador de archivos **Material You** para [Sylphrena](https://github.com/iMac
 
 - **Lugares** — Inicio, Papelera y favoritos anclados (pins XDG por defecto, reordenables; Inicio/Papelera fijos)
 - **Navegación** — atrás/adelante; subir y actualizar opcionales (menú ⋮); historial
-- **Barra de dirección** — edición inline, refresh dentro de la pastilla, sugerencias en jerarquía hacia arriba
+- **Barra de dirección** — edición inline, refresh en la pastilla, sugerencias en jerarquía hacia arriba; rueda del ratón encima = adelante/atrás
+
 - **Vistas** — cuadrícula / lista / detalles (rueda + menú split)
 - **Selección** — clic, Ctrl+clic, marco; RMB conserva multi-selección
 - **Portapapeles** — copiar / cortar / pegar; papelera freedesktop; deshacer
