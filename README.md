@@ -1,20 +1,25 @@
 # Seeker
 
-Explorador de archivos **Material You** pensado para [Sylphrena](https://github.com/iMacnucintosh/sylphrena-shell).
+Explorador de archivos **Material You** para [Sylphrena](https://github.com/iMacnucintosh/sylphrena-shell).
 
-- Producto: **Seeker**
-- Nombre en el lanzador: **Archivos** (`seeker.desktop`)
-- Stack v0: **Qt 6 Quick / QML + C++** (qmake). El plan original apuntaba a Rust+cxx-qt; en esta máquina no había `rustc`/`cmake`/`clang`, así que el v0 usa C++ nativo de Qt (mismo UI QML y D-Bus). Se puede añadir un crate Rust después sin cambiar la capa QML.
+- Producto: **Seeker** · lanzador: **Archivos**
+- Stack: **Qt 6 Quick / QML + C++** (qmake)
+- Binario: `~/.local/bin/seeker` · config: `~/.config/seeker/`
 
-## Funciones v0
+## Funciones
 
-- Lugares (Inicio, Escritorio, Documentos, Descargas, …, Papelera)
-- Navegación con historial atrás/adelante
-- Abrir ficheros (`QDesktopServices` / `xdg-open`)
-- Copiar / cortar / pegar / papelera freedesktop
-- Menú de acciones con popup animado desde el botón
-- Tema desde `~/.config/seeker/theme.json` (escrito por Sylphrena) o fallback `~/.local/state/sylphrena/scheme.json`
-- Stub D-Bus `org.freedesktop.FileManager1`
+- **Lugares** — Inicio, Papelera y favoritos anclados (pins XDG por defecto, reordenables; Inicio/Papelera fijos)
+- **Navegación** — atrás/adelante; subir y actualizar opcionales (menú ⋮); historial
+- **Barra de dirección** — edición inline, refresh dentro de la pastilla, sugerencias en jerarquía hacia arriba
+- **Vistas** — cuadrícula / lista / detalles (rueda + menú split)
+- **Selección** — clic, Ctrl+clic, marco; RMB conserva multi-selección
+- **Portapapeles** — copiar / cortar / pegar; papelera freedesktop; deshacer
+- **Arrastre** — mover/copiar entre carpetas; soltar en favoritos para anclar
+- **Previsualizaciones** — thumbs de imágenes; mosaico 2×2 en iconos de carpeta (opt-in)
+- **Menú contextual** — abrir, propiedades, icono de carpeta, abrir con…
+- **Chrome** — botones nueva carpeta / subir / actualizar mostrables u ocultables desde ⋮
+- **Tema** — Material You en vivo desde Sylphrena (`theme.json`)
+- **Portal** — FileChooser xdg-desktop-portal + stub `FileManager1`
 
 ## Build
 
@@ -25,11 +30,29 @@ make -j$(nproc)
 make install
 ```
 
-Binario: `~/.local/bin/seeker`
-
 ## Tema Sylphrena
 
-`scripts/sylphrena-quiet.py` escribe `~/.config/seeker/theme.json` en cada apply de esquema. Seeker recarga en caliente.
+`scripts/sylphrena-quiet.py` escribe `~/.config/seeker/theme.json` en cada apply. Seeker recarga en caliente.
+
+## Miniaturas
+
+Con *Previsualizar* activo: `image://thumb` → caché JPEG en `~/.cache/Sylphrena/Seeker/thumbs/` (~256 MiB, poda LRU).
+
+## FileChooser (portal)
+
+```bash
+make install
+./portal/install-portal.sh
+```
+
+```ini
+# ~/.config/xdg-desktop-portal/portals.conf
+[preferred]
+default=hyprland;seeker;gtk
+org.freedesktop.impl.portal.FileChooser=seeker
+```
+
+Prueba sin portal: `seeker --pick --pick-mode=folder --pick-result=/tmp/pick.json`
 
 ## Licencia
 

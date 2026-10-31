@@ -1,26 +1,42 @@
 import QtQuick
-import QtQuick.Controls
+import QtQuick.Layouts
 
 Item {
     id: root
-    property string icon: ""
-    property bool fill: false
+    property string icon: ""       // Material Symbols name
     property color colour: Theme.onSurfaceVariant
     property color bg: "transparent"
-    property bool enabled: true
+    property real radius: height / 2
+    property int size: 40
+    property int iconSize: 22
     signal clicked()
 
-    width: 40
-    height: 40
+    // Collapse in RowLayout when hidden (visible:false alone still reserves space).
+    Layout.preferredWidth: visible ? root.size : 0
+    Layout.preferredHeight: visible ? root.size : 0
+    Layout.maximumWidth: visible ? root.size : 0
+    implicitWidth: visible ? root.size : 0
+    implicitHeight: visible ? root.size : 0
+    width: visible ? root.size : 0
+    height: visible ? root.size : 0
     opacity: enabled ? 1 : 0.38
+    clip: !visible
 
     Rectangle {
-        id: disc
-        anchors.fill: parent
-        radius: height / 2
+        id: chrome
+        anchors.centerIn: parent
+        width: parent.width + (layer.pressed ? 8 : 0)
+        height: width
+        radius: layer.pressed ? 10 : width / 2
         color: root.bg
-        scale: ma.containsPress ? 0.94 : 1
+        scale: layer.pressed ? 0.94 : 1
 
+        Behavior on width {
+            NumberAnimation { duration: 160; easing.type: Easing.OutCubic }
+        }
+        Behavior on radius {
+            NumberAnimation { duration: 160; easing.type: Easing.OutCubic }
+        }
         Behavior on scale {
             NumberAnimation { duration: 160; easing.type: Easing.OutBack }
         }
@@ -28,26 +44,19 @@ Item {
 
     MaterialIcon {
         anchors.centerIn: parent
+        z: 1
         icon: root.icon
-        size: 22
-        fill: root.fill
+        colour: root.colour
+        size: root.iconSize
+    }
+
+    StateLayer {
+        id: layer
+        z: 2
+        radius: chrome.radius
+        shapeMorph: true
         color: root.colour
-    }
-
-    MouseArea {
-        id: ma
-        anchors.fill: parent
-        enabled: root.enabled
-        hoverEnabled: true
-        cursorShape: Qt.PointingHandCursor
+        disabled: !root.enabled
         onClicked: root.clicked()
-    }
-
-    Rectangle {
-        anchors.fill: parent
-        radius: height / 2
-        color: Theme.onSurface
-        opacity: ma.containsMouse && root.enabled ? 0.08 : 0
-        Behavior on opacity { NumberAnimation { duration: 120 } }
     }
 }

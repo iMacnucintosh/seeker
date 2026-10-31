@@ -2,6 +2,7 @@
 
 #include <QDir>
 #include <QFileInfo>
+#include <QLocale>
 #include <QMimeDatabase>
 
 DirModel::DirModel(QObject *parent)
@@ -23,6 +24,15 @@ void DirModel::refresh() {
     emit pathChanged();
 }
 
+void DirModel::setShowHidden(bool show) {
+    if (m_showHidden == show)
+        return;
+    m_showHidden = show;
+    emit showHiddenChanged();
+    reload();
+    emit pathChanged();
+}
+
 void DirModel::reload() {
     beginResetModel();
     m_entries.clear();
@@ -33,8 +43,11 @@ void DirModel::reload() {
         return;
     }
 
-    const auto infos = dir.entryInfoList(QDir::AllEntries | QDir::NoDotAndDotDot | QDir::Hidden,
-                                         QDir::DirsFirst | QDir::Name | QDir::IgnoreCase);
+    QDir::Filters filters = QDir::AllEntries | QDir::NoDotAndDotDot;
+    if (m_showHidden)
+        filters |= QDir::Hidden;
+
+    const auto infos = dir.entryInfoList(filters, QDir::DirsFirst | QDir::Name | QDir::IgnoreCase);
     QMimeDatabase mimeDb;
     m_entries.reserve(infos.size());
     for (const QFileInfo &fi : infos) {
@@ -44,10 +57,13 @@ void DirModel::reload() {
         e.isDir = fi.isDir();
         e.isHidden = fi.isHidden();
         e.size = fi.isDir() ? 0 : fi.size();
+        e.modified = fi.lastModified();
         if (e.isDir)
             e.mimeIcon = QStringLiteral("folder");
         else {
-            const QString icon = mimeDb.mimeTypeForFile(fi).iconName();
+            const auto mime = mimeDb.mimeTypeForFile(fi);
+            e.isImage = mime.name().startsWith(QLatin1String("image/"));
+            const QString icon = mime.iconName();
             e.mimeIcon = icon.isEmpty() ? QStringLiteral("text-x-generic") : icon;
         }
         m_entries.push_back(std::move(e));
@@ -76,8 +92,16 @@ QVariant DirModel::data(const QModelIndex &index, int role) const {
         return e.isHidden;
     case SizeRole:
         return e.size;
+    case ModifiedRole:
+        return e.modified;
+    case ModifiedTextRole:
+        return e.modified.isValid()
+            ? QLocale::system().toString(e.modified, QLocale::ShortFormat)
+            : QString();
     case IconNameRole:
         return e.mimeIcon;
+    case IsImageRole:
+        return e.isImage;
     default:
         return {};
     }
@@ -90,6 +114,9 @@ QHash<int, QByteArray> DirModel::roleNames() const {
         {IsDirRole, "isDir"},
         {IsHiddenRole, "isHidden"},
         {SizeRole, "size"},
+        {ModifiedRole, "modified"},
+        {ModifiedTextRole, "modifiedText"},
         {IconNameRole, "iconName"},
+        {IsImageRole, "isImage"},
     };
 }

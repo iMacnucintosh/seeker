@@ -1,0 +1,370 @@
+#!/usr/bin/env python3
+"""xdg-desktop-portal FileChooser backend that launches Seeker --pick."""
+
+from __future__ import annotations
+
+import json
+import os
+import signal
+import subprocess
+import sys
+import tempfile
+import threading
+from pathlib import Path
+from typing import Any
+
+import gi
+
+gi.require_version("Gio", "2.0")
+gi.require_version("GLib", "2.0")
+from gi.repository import Gio, GLib  # noqa: E402
+
+BUS_NAME = "org.freedesktop.impl.portal.desktop.seeker"
+OBJECT_PATH = "/org/freedesktop/portal/desktop"
+FILE_CHOOSER_IFACE = "org.freedesktop.impl.portal.FileChooser"
+REQUEST_IFACE = "org.freedesktop.impl.portal.Request"
+
+SEEKERS = [
+    Path.home() / ".local" / "bin" / "seeker",
+    Path("/usr/bin/seeker"),
+]
+
+FILE_CHOOSER_XML = f"""
+<node>
+  <interface name="{FILE_CHOOSER_IFACE}">
+    <method name="OpenFile">
+      <arg type="o" name="handle" direction="in"/>
+      <arg type="s" name="app_id" direction="in"/>
+      <arg type="s" name="parent_window" direction="in"/>
+      <arg type="s" name="title" direction="in"/>
+      <arg type="a{{sv}}" name="options" direction="in"/>
+      <arg type="u" name="response" direction="out"/>
+      <arg type="a{{sv}}" name="results" direction="out"/>
+    </method>
+    <method name="SaveFile">
+      <arg type="o" name="handle" direction="in"/>
+      <arg type="s" name="app_id" direction="in"/>
+      <arg type="s" name="parent_window" direction="in"/>
+      <arg type="s" name="title" direction="in"/>
+      <arg type="a{{sv}}" name="options" direction="in"/>
+      <arg type="u" name="response" direction="out"/>
+      <arg type="a{{sv}}" name="results" direction="out"/>
+    </method>
+    <method name="SaveFiles">
+      <arg type="o" name="handle" direction="in"/>
+      <arg type="s" name="app_id" direction="in"/>
+      <arg type="s" name="parent_window" direction="in"/>
+      <arg type="s" name="title" direction="in"/>
+      <arg type="a{{sv}}" name="options" direction="in"/>
+      <arg type="u" name="response" direction="out"/>
+      <arg type="a{{sv}}" name="results" direction="out"/>
+    </method>
+  </interface>
+</node>
+"""
+
+REQUEST_XML = f"""
+<node>
+  <interface name="{REQUEST_IFACE}">
+    <method name="Close"/>
+  </interface>
+</node>
+"""
+
+
+def find_seeker() -> str:
+    env = os.environ.get("SEEKER_BIN")
+    if env and Path(env).is_file():
+        return env
+    for p in SEEKERS:
+        if p.is_file() and os.access(p, os.X_OK):
+            return str(p)
+    return "seeker"
+
+
+def strip_mnemonic(label: str | None) -> str:
+    if not label:
+        return ""
+    return label.replace("_", "")
+
+
+def decode_bytestring(value: Any) -> str:
+    if value is None:
+        return ""
+    if isinstance(value, (bytes, bytearray, memoryview)):
+        data = bytes(value)
+        if data.endswith(b"\x00"):
+            data = data[:-1]
+        return os.fsdecode(data)
+    if isinstance(value, str):
+        return value
+    return ""
+
+
+def option_bool(options: dict, key: str, default: bool = False) -> bool:
+    v = options.get(key)
+    if v is None:
+        return default
+    return bool(v)
+
+
+class Request:
+    def __init__(self, connection: Gio.DBusConnection, handle: str):
+        self.connection = connection
+        self.handle = handle
+        self.cancelled = False
+        self.proc: subprocess.Popen | None = None
+        node = Gio.DBusNodeInfo.new_for_xml(REQUEST_XML)
+        self._reg_id = connection.register_object(
+            handle,
+            node.interfaces[0],
+            self._on_method,
+            None,
+            None,
+        )
+
+    def _on_method(self, connection, sender, object_path, interface_name, method_name, parameters, invocation):
+        if method_name == "Close":
+            self.cancel()
+            invocation.return_value(None)
+        else:
+            invocation.return_error_literal(
+                Gio.DBusError.quark(),
+                Gio.DBusError.UNKNOWN_METHOD,
+                f"Unknown method {method_name}",
+            )
+
+    def cancel(self) -> None:
+        self.cancelled = True
+        if self.proc and self.proc.poll() is None:
+            try:
+                self.proc.send_signal(signal.SIGTERM)
+            except OSError:
+                pass
+
+    def unregister(self) -> None:
+        if self._reg_id is not None:
+            self.connection.unregister_object(self._reg_id)
+            self._reg_id = None
+
+
+class Portal:
+    def __init__(self):
+        self.connection: Gio.DBusConnection | None = None
+        self._owner_id = 0
+        self._reg_id = 0
+        self.seeker = find_seeker()
+        self.loop = GLib.MainLoop()
+
+    def run(self) -> int:
+        self._owner_id = Gio.bus_own_name(
+            Gio.BusType.SESSION,
+            BUS_NAME,
+            Gio.BusNameOwnerFlags.ALLOW_REPLACEMENT | Gio.BusNameOwnerFlags.REPLACE,
+            self._on_bus_acquired,
+            self._on_name_acquired,
+            self._on_name_lost,
+        )
+        try:
+            self.loop.run()
+        except KeyboardInterrupt:
+            pass
+        return 0
+
+    def _on_bus_acquired(self, connection: Gio.DBusConnection, name: str) -> None:
+        self.connection = connection
+        node = Gio.DBusNodeInfo.new_for_xml(FILE_CHOOSER_XML)
+        self._reg_id = connection.register_object(
+            OBJECT_PATH,
+            node.interfaces[0],
+            self._on_method,
+            None,
+            None,
+        )
+
+    def _on_name_acquired(self, connection: Gio.DBusConnection, name: str) -> None:
+        print(f"seeker-portal: acquired {name}", file=sys.stderr)
+
+    def _on_name_lost(self, connection: Gio.DBusConnection, name: str) -> None:
+        print(f"seeker-portal: lost {name}", file=sys.stderr)
+        if self.loop.is_running():
+            self.loop.quit()
+
+    def _on_method(self, connection, sender, object_path, interface_name, method_name, parameters, invocation):
+        handle, app_id, parent_window, title, options = parameters.unpack()
+        options = dict(options) if options else {}
+
+        if method_name == "OpenFile":
+            mode = "folder" if option_bool(options, "directory") else "file"
+            multiple = option_bool(options, "multiple")
+            save_names: list[str] = []
+        elif method_name == "SaveFile":
+            mode = "save"
+            multiple = False
+            save_names = []
+        elif method_name == "SaveFiles":
+            mode = "folder"
+            multiple = False
+            save_names = []
+            raw_files = options.get("files")
+            if raw_files:
+                for item in raw_files:
+                    name = decode_bytestring(item)
+                    if name:
+                        save_names.append(Path(name).name)
+        else:
+            invocation.return_error_literal(
+                Gio.DBusError.quark(),
+                Gio.DBusError.UNKNOWN_METHOD,
+                f"Unknown method {method_name}",
+            )
+            return
+
+        accept = strip_mnemonic(options.get("accept_label") or "")
+        current = decode_bytestring(options.get("current_folder"))
+        if not current and method_name == "SaveFile":
+            current = decode_bytestring(options.get("current_file"))
+            if current:
+                current = str(Path(current).parent)
+        suggested = options.get("current_name") or ""
+        if isinstance(suggested, bytes):
+            suggested = decode_bytestring(suggested)
+
+        request = Request(connection, handle)
+
+        def worker() -> None:
+            response, results = self._run_pick(
+                request=request,
+                mode=mode,
+                multiple=multiple,
+                title=title or "",
+                accept=accept,
+                current=current,
+                suggested=suggested,
+                save_names=save_names,
+            )
+            request.unregister()
+
+            def finish() -> bool:
+                invocation.return_value(GLib.Variant("(ua{sv})", (response, results)))
+                return GLib.SOURCE_REMOVE
+
+            GLib.idle_add(finish)
+
+        threading.Thread(target=worker, daemon=True).start()
+
+    def _run_pick(
+        self,
+        request: Request,
+        mode: str,
+        multiple: bool,
+        title: str,
+        accept: str,
+        current: str,
+        suggested: str,
+        save_names: list[str],
+    ) -> tuple[int, dict]:
+        if request.cancelled:
+            return 1, {}
+
+        fd, result_path = tempfile.mkstemp(prefix="seeker-portal-", suffix=".json")
+        os.close(fd)
+        try:
+            os.unlink(result_path)
+        except OSError:
+            pass
+
+        cmd = [self.seeker, "--pick", f"--pick-mode={mode}", f"--pick-result={result_path}"]
+        if multiple:
+            cmd.append("--pick-multiple")
+        if title:
+            cmd.append(f"--pick-title={title}")
+        if accept:
+            cmd.append(f"--pick-accept={accept}")
+        if current and Path(current).is_dir():
+            cmd.append(f"--pick-current={current}")
+        if suggested and mode == "save":
+            cmd.append(f"--pick-name={suggested}")
+
+        # Optional filters → --pick-extensions (ignore glob patterns for v1).
+        filters = options.get("filters")
+        exts: list[str] = []
+        if filters:
+            try:
+                for _name, rules in filters:
+                    for rule in rules:
+                        # (uint type, string pattern) — type 0 = glob
+                        pattern = rule[1] if isinstance(rule, (list, tuple)) and len(rule) > 1 else ""
+                        if not isinstance(pattern, str):
+                            continue
+                        for part in pattern.replace(";", " ").split():
+                            part = part.strip().lstrip("*").lstrip(".")
+                            if part and part != "*" and "/" not in part and len(part) < 12:
+                                exts.append(part.lower())
+            except (TypeError, ValueError, IndexError):
+                pass
+        if exts:
+            cmd.append("--pick-extensions=" + ",".join(sorted(set(exts))))
+
+        try:
+            request.proc = subprocess.Popen(cmd)
+            request.proc.wait()
+        except FileNotFoundError:
+            return 2, {}
+        except Exception as exc:  # noqa: BLE001
+            print(f"seeker-portal: spawn failed: {exc}", file=sys.stderr)
+            return 2, {}
+
+        if request.cancelled:
+            return 1, {}
+
+        try:
+            data = json.loads(Path(result_path).read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return 1, {}
+        finally:
+            try:
+                os.unlink(result_path)
+            except OSError:
+                pass
+
+        response = int(data.get("response", 1))
+        uris = [u for u in data.get("uris", []) if isinstance(u, str) and u.startswith("file:")]
+        if response != 0:
+            return response, {}
+
+        # SaveFiles: append provided filenames under the chosen folder.
+        if save_names and uris:
+            folder = Path(GLib.filename_from_uri(uris[0])[0])
+            if folder.is_file():
+                folder = folder.parent
+            out: list[str] = []
+            for name in save_names:
+                dest = folder / name
+                # Unique-ify if exists
+                if dest.exists():
+                    stem, suffix = dest.stem, dest.suffix
+                    n = 1
+                    while True:
+                        cand = folder / f"{stem} ({n}){suffix}"
+                        if not cand.exists():
+                            dest = cand
+                            break
+                        n += 1
+                out.append(Path(dest).as_uri())
+            uris = out
+
+        return 0, {"uris": GLib.Variant("as", uris)}
+
+
+def main() -> int:
+    # Ensure PATH has user bin for seeker when activated via D-Bus.
+    home_bin = str(Path.home() / ".local" / "bin")
+    path = os.environ.get("PATH", "")
+    if home_bin not in path.split(":"):
+        os.environ["PATH"] = home_bin + ":" + path
+    return Portal().run()
+
+
+if __name__ == "__main__":
+    sys.exit(main())
