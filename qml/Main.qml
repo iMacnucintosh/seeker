@@ -310,6 +310,12 @@ ApplicationWindow {
                     Layout.leftMargin: 8
                     Layout.rightMargin: 8
                     barHeight: 40
+                    onHistoryStepRequested: (dir) => {
+                        if (dir < 0 && Browser.canGoBack)
+                            win.softNavigate(() => Browser.goBack())
+                        else if (dir > 0 && Browser.canGoForward)
+                            win.softNavigate(() => Browser.goForward())
+                    }
                 }
 
                 ViewModeSplit {
