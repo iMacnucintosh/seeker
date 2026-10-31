@@ -6,20 +6,20 @@ Item {
     id: root
     property bool open: false
     property Item anchor: null
-    property alias content: body.data
     property real popupWidth: 220
+    // Children (MenuRow) must land inside the Popup, not on this root Item.
+    default property alias content: body.data
 
-    // Morph from the anchor button: scale + fade from its center.
+    readonly property Item overlayParent: Overlay.overlay || parent
+
     function openAt() {
-        if (!anchor)
+        const host = panel.parent
+        if (!anchor || !host)
             return
-        const p = anchor.mapToItem(overlayParent, anchor.width / 2, anchor.height / 2)
-        panel.x = Math.min(Math.max(8, p.x - panel.width + anchor.width / 2), overlayParent.width - panel.width - 8)
-        panel.y = Math.min(p.y + anchor.height / 2 + 6, overlayParent.height - panel.height - 8)
-        open = true
+        const p = anchor.mapToItem(host, anchor.width, anchor.height)
+        panel.x = Math.min(Math.max(8, p.x - root.popupWidth), Math.max(8, host.width - root.popupWidth - 8))
+        panel.y = Math.min(p.y + 6, Math.max(8, host.height - 220))
     }
-
-    property Item overlayParent: Overlay.overlay
 
     Popup {
         id: panel
@@ -27,9 +27,10 @@ Item {
         modal: true
         dim: true
         focus: true
-        padding: 0
+        padding: 8
         width: root.popupWidth
         closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+        transformOrigin: Item.TopRight
 
         Overlay.modal: Rectangle {
             color: Qt.rgba(0, 0, 0, 0.28)
@@ -55,11 +56,9 @@ Item {
             }
         }
 
-        transformOrigin: Item.TopRight
-
         ColumnLayout {
             id: body
-            width: root.popupWidth
+            width: root.popupWidth - 16
             spacing: 0
         }
 
@@ -68,6 +67,9 @@ Item {
 
     onOpenChanged: {
         if (open) {
+            // Parent may resolve only after window is ready.
+            if (!panel.parent)
+                panel.parent = Overlay.overlay || parent
             openAt()
             panel.open()
         } else {
@@ -78,6 +80,7 @@ Item {
     component MenuRow: Item {
         id: row
         property string icon: ""
+        property string glyph: ""
         property string label: ""
         property bool dangerous: false
         signal clicked()
@@ -97,17 +100,21 @@ Item {
             anchors.leftMargin: 16
             anchors.rightMargin: 16
             spacing: 12
+            clip: true
 
             MaterialIcon {
+                Layout.preferredWidth: 22
+                Layout.alignment: Qt.AlignVCenter
                 icon: row.icon
                 size: 20
-                color: row.dangerous ? Theme.error : Theme.onSurfaceVariant
+                colour: row.dangerous ? Theme.error : Theme.onSurfaceVariant
             }
-            Text {
+            StyledText {
                 Layout.fillWidth: true
                 text: row.label
                 color: row.dangerous ? Theme.error : Theme.onSurface
                 font.pixelSize: 14
+                elide: Text.ElideRight
             }
         }
 

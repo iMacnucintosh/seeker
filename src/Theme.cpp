@@ -2,6 +2,9 @@
 
 #include <QDir>
 #include <QFile>
+#include <QFont>
+#include <QFontDatabase>
+#include <QFontInfo>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QStandardPaths>
@@ -26,6 +29,20 @@ QColor parseHex(const QString &raw) {
 }
 
 } // namespace
+
+QString Theme::pickFamily(const QStringList &candidates) {
+    const QStringList installed = QFontDatabase::families();
+    for (const QString &name : candidates) {
+        if (installed.contains(name))
+            return name;
+        // Qt often resolves "GoogleSansFlex" → "Google Sans Flex" without an exact list hit.
+        const QFont probe{name};
+        const QFontInfo info{probe};
+        if (installed.contains(info.family()))
+            return info.family();
+    }
+    return candidates.isEmpty() ? QStringLiteral("sans-serif") : candidates.last();
+}
 
 Theme::Theme(QObject *parent)
     : QObject(parent) {
@@ -66,8 +83,31 @@ QColor Theme::color(const QString &key, const QString &fallback) const {
     return m_mode == QLatin1String("light") ? QColor(QStringLiteral("#f4ece8")) : QColor(QStringLiteral("#161310"));
 }
 
+QColor Theme::withAlpha(const QColor &c) const {
+    if (!m_transparencyEnabled)
+        return c;
+    QColor out = c;
+    out.setAlphaF(qBound(0.0, m_transparencyBase, 1.0));
+    return out;
+}
+
 void Theme::applyDefaults() {
     m_mode = QStringLiteral("dark");
+    m_transparencyEnabled = false;
+    m_transparencyBase = 0.85;
+    // Sylphrena tokens say "GoogleSansFlex"; the TTF registers "Google Sans Flex".
+    m_uiFamily = pickFamily({
+        QStringLiteral("Google Sans Flex"),
+        QStringLiteral("GoogleSansFlex"),
+        QStringLiteral("Rubik"),
+        QStringLiteral("Noto Sans"),
+        QStringLiteral("sans-serif"),
+    });
+    m_iconFamily = pickFamily({
+        QStringLiteral("Material Symbols Rounded"),
+        QStringLiteral("Material Symbols Outlined"),
+        QStringLiteral("sans-serif"),
+    });
     m_colours = {
         {QStringLiteral("background"), QStringLiteral("161310")},
         {QStringLiteral("surface"), QStringLiteral("161310")},
@@ -101,6 +141,14 @@ void Theme::loadFrom(const QString &path) {
     const QJsonObject root = doc.object();
     if (root.contains(QStringLiteral("mode")))
         m_mode = root.value(QStringLiteral("mode")).toString(m_mode);
+
+    const QJsonObject tr = root.value(QStringLiteral("transparency")).toObject();
+    if (!tr.isEmpty()) {
+        if (tr.contains(QStringLiteral("enabled")))
+            m_transparencyEnabled = tr.value(QStringLiteral("enabled")).toBool(false);
+        if (tr.contains(QStringLiteral("base")))
+            m_transparencyBase = tr.value(QStringLiteral("base")).toDouble(0.85);
+    }
 
     QJsonObject colours = root.value(QStringLiteral("colours")).toObject();
     if (colours.isEmpty())

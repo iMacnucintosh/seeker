@@ -10,15 +10,25 @@ SOURCES += \
     src/BrowserController.cpp \
     src/DirModel.cpp \
     src/Theme.cpp \
+    src/ThemeIconProvider.cpp \
     src/Trash.cpp \
-    src/FileManager1.cpp
+    src/FileManager1.cpp \
+    src/PickController.cpp \
+    src/ThumbnailProvider.cpp \
+    src/PropertiesController.cpp \
+    src/OpenWithController.cpp
 
 HEADERS += \
     src/BrowserController.h \
     src/DirModel.h \
     src/Theme.h \
+    src/ThemeIconProvider.h \
     src/Trash.h \
-    src/FileManager1.h
+    src/FileManager1.h \
+    src/PickController.h \
+    src/ThumbnailProvider.h \
+    src/PropertiesController.h \
+    src/OpenWithController.h
 
 RESOURCES += qml.qrc
 
@@ -30,8 +40,15 @@ dbus.files = data/dbus/org.freedesktop.FileManager1.service
 icons.path = $$PREFIX/share/icons/hicolor/scalable/apps
 icons.files = data/seeker.svg
 
+portal_libexec.path = $$PREFIX/libexec
+portal_libexec.files = portal/xdg-desktop-portal-seeker
+portal_portal.path = $$PREFIX/share/xdg-desktop-portal/portals
+portal_portal.files = portal/seeker.portal
+
 isEmpty(PREFIX) {
     PREFIX = $$HOME/.local
 }
 
-INSTALLS += target desktop dbus icons
+INSTALLS += target desktop dbus icons portal_libexec portal_portal
+
+# D-Bus service + portals.conf: run portal/install-portal.sh after make install.

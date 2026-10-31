@@ -1,11 +1,25 @@
 <RCC>
     <qresource prefix="/">
         <file>qml/Main.qml</file>
-        <file>qml/components/MaterialIcon.qml</file>
+        <file>qml/components/ToolIcon.qml</file>
         <file>qml/components/IconButton.qml</file>
         <file>qml/components/SidePlace.qml</file>
-        <file>qml/components/AnchorPopup.qml</file>
+        <file>qml/components/PlacesRail.qml</file>
+        <file>qml/components/BloomMenu.qml</file>
+        <file>qml/components/ContextMenu.qml</file>
         <file>qml/components/FileRow.qml</file>
+        <file>qml/components/FileDetailsRow.qml</file>
+        <file>qml/components/FileCell.qml</file>
+        <file>qml/components/ViewModeSplit.qml</file>
+        <file>qml/components/FileNameLabel.qml</file>
+        <file>qml/components/MaterialIcon.qml</file>
+        <file>qml/components/StyledText.qml</file>
+        <file>qml/components/StateLayer.qml</file>
+        <file>qml/components/PathBar.qml</file>
+        <file>qml/components/IconPicker.qml</file>
+        <file>qml/components/PropertiesDialog.qml</file>
+        <file>qml/components/OpenWithDialog.qml</file>
         <file>data/seeker.svg</file>
+        <file>data/material-symbols.txt</file>
     </qresource>
 </RCC>

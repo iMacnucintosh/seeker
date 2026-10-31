@@ -1,6 +1,50 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
-  <rect width="128" height="128" rx="28" fill="#75593b"/>
-  <path d="M28 44c0-6.627 5.373-12 12-12h20l8 10h32c6.627 0 12 5.373 12 12v36c0 6.627-5.373 12-12 12H40c-6.627 0-12-5.373-12-12V44z" fill="#fff8f4"/>
-  <circle cx="84" cy="78" r="18" stroke="#75593b" stroke-width="8" fill="none"/>
-  <path d="M96 90l14 14" stroke="#75593b" stroke-width="8" stroke-linecap="round"/>
+  <defs>
+    <linearGradient id="bg" x1="18" y1="8" x2="110" y2="120" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#9A7A55"/>
+      <stop offset="0.55" stop-color="#75593B"/>
+      <stop offset="1" stop-color="#5A4129"/>
+    </linearGradient>
+    <linearGradient id="folder" x1="30" y1="36" x2="98" y2="100" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFBF7"/>
+      <stop offset="1" stop-color="#E8D5C4"/>
+    </linearGradient>
+    <linearGradient id="tab" x1="40" y1="30" x2="72" y2="48" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFF8F2"/>
+      <stop offset="1" stop-color="#DCC4AE"/>
+    </linearGradient>
+    <linearGradient id="lens" x1="78" y1="70" x2="108" y2="104" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#5A4129"/>
+      <stop offset="1" stop-color="#3D2B1A"/>
+    </linearGradient>
+    <filter id="soft" x="-20%" y="-20%" width="140%" height="140%" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="2" stdDeviation="2.2" flood-color="#2A1A0C" flood-opacity="0.28"/>
+    </filter>
+  </defs>
+
+  <!-- Squircle -->
+  <rect width="128" height="128" rx="28" fill="url(#bg)"/>
+
+  <!-- Soft highlight -->
+  <path d="M28 18c18-8 54-8 72 0 10 4 16 12 16 22 0-18-20-28-52-28S12 22 12 40c0-10 6-18 16-22z"
+        fill="#ffffff" opacity="0.10"/>
+
+  <!-- Folder tab -->
+  <path filter="url(#soft)"
+        d="M34 46c0-5.5 4.5-10 10-10h18.5c2.4 0 4.6 1.1 6.1 2.9L74 46H34z"
+        fill="url(#tab)"/>
+
+  <!-- Folder body -->
+  <path filter="url(#soft)"
+        d="M28 50c0-5.523 4.477-10 10-10h52c5.523 0 10 4.477 10 10v36c0 5.523-4.477 10-10 10H38c-5.523 0-10-4.477-10-10V50z"
+        fill="url(#folder)"/>
+
+  <!-- Inner pocket line -->
+  <path d="M40 62h48" stroke="#75593B" stroke-opacity="0.22" stroke-width="3" stroke-linecap="round"/>
+
+  <!-- Magnifier badge -->
+  <circle cx="90" cy="86" r="20" fill="url(#lens)" filter="url(#soft)"/>
+  <circle cx="90" cy="86" r="20" fill="#ffffff" opacity="0.06"/>
+  <circle cx="88" cy="83" r="9.5" stroke="#F5E6D8" stroke-width="3.5" fill="none"/>
+  <path d="M95 90.5L104 100" stroke="#F5E6D8" stroke-width="3.5" stroke-linecap="round"/>
 </svg>
