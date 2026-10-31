@@ -9,7 +9,6 @@ Item {
 
     property bool expanded: false
     readonly property int gap: 2
-    readonly property int padH: 14
     readonly property color pillColor: Theme.surfaceContainerHigh
     readonly property color inkColor: Theme.onSurface
 
@@ -36,32 +35,19 @@ Item {
         Rectangle {
             id: leftPill
             height: parent.height
-            implicitWidth: Math.max(118, textRow.implicitWidth + root.padH * 2)
+            implicitWidth: height
             width: implicitWidth
             radius: height / 2
             topRightRadius: 8
             bottomRightRadius: 8
             color: root.pillColor
 
-            RowLayout {
-                id: textRow
+            MaterialIcon {
                 anchors.centerIn: parent
-                spacing: 8
-
-                MaterialIcon {
-                    Layout.alignment: Qt.AlignVCenter
-                    icon: Browser.viewModeIcon(Browser.viewMode)
-                    size: 20
-                    colour: root.inkColor
-                    fill: 1
-                }
-                StyledText {
-                    Layout.alignment: Qt.AlignVCenter
-                    text: Browser.viewModeLabel(Browser.viewMode)
-                    color: root.inkColor
-                    font.pixelSize: 13
-                    font.weight: Font.Medium
-                }
+                icon: Browser.viewModeIcon(Browser.viewMode)
+                size: 20
+                colour: root.inkColor
+                fill: 1
             }
 
             MouseArea {
