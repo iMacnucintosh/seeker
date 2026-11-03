@@ -15,6 +15,7 @@ SOURCES += \
     src/FileManager1.cpp \
     src/PickController.cpp \
     src/ThumbnailProvider.cpp \
+    src/Thumbnailers.cpp \
     src/PropertiesController.cpp \
     src/OpenWithController.cpp
 
@@ -27,6 +28,7 @@ HEADERS += \
     src/FileManager1.h \
     src/PickController.h \
     src/ThumbnailProvider.h \
+    src/Thumbnailers.h \
     src/PropertiesController.h \
     src/OpenWithController.h
 

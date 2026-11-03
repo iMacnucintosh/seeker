@@ -1,4 +1,5 @@
 #include "DirModel.h"
+#include "Thumbnailers.h"
 
 #include <QDir>
 #include <QFileInfo>
@@ -62,8 +63,14 @@ void DirModel::reload() {
             e.mimeIcon = QStringLiteral("folder");
         else {
             const auto mime = mimeDb.mimeTypeForFile(fi);
-            e.isImage = mime.name().startsWith(QLatin1String("image/"));
-            const QString icon = mime.iconName();
+            const auto mimeExt = mimeDb.mimeTypeForFile(fi, QMimeDatabase::MatchExtension);
+            e.isImage = mime.name().startsWith(QLatin1String("image/"))
+                        || mimeExt.name().startsWith(QLatin1String("image/"));
+            e.canPreview = e.isImage || Thumbnailers::instance().supportsFile(e.path);
+            // Prefer extension icon for types content-sniff gets wrong (.blend → zstd).
+            QString icon = mimeExt.iconName();
+            if (icon.isEmpty() || mimeExt.name() == QLatin1String("application/octet-stream"))
+                icon = mime.iconName();
             e.mimeIcon = icon.isEmpty() ? QStringLiteral("text-x-generic") : icon;
         }
         m_entries.push_back(std::move(e));
@@ -102,6 +109,8 @@ QVariant DirModel::data(const QModelIndex &index, int role) const {
         return e.mimeIcon;
     case IsImageRole:
         return e.isImage;
+    case CanPreviewRole:
+        return e.canPreview;
     default:
         return {};
     }
@@ -118,5 +127,6 @@ QHash<int, QByteArray> DirModel::roleNames() const {
         {ModifiedTextRole, "modifiedText"},
         {IconNameRole, "iconName"},
         {IsImageRole, "isImage"},
+        {CanPreviewRole, "canPreview"},
     };
 }

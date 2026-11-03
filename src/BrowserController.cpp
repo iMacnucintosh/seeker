@@ -1,6 +1,7 @@
 #include "BrowserController.h"
 #include "OpenWithController.h"
 #include "Theme.h"
+#include "Thumbnailers.h"
 
 #include <QDesktopServices>
 #include <QDir>
@@ -417,7 +418,8 @@ QStringList BrowserController::folderPreviewPaths(const QString &dirPath, int ma
     for (const QString &name : names) {
         const QString fp = dir.filePath(name);
         const auto mime = mimeDb.mimeTypeForFile(QFileInfo(fp), QMimeDatabase::MatchExtension);
-        if (!mime.name().startsWith(QLatin1String("image/")))
+        const bool image = mime.name().startsWith(QLatin1String("image/"));
+        if (!image && !Thumbnailers::instance().supportsFile(fp))
             continue;
         paths.append(fp);
         if (paths.size() >= maxCount)

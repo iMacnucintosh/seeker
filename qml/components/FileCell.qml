@@ -9,6 +9,7 @@ Item {
     property bool isDir: false
     property string iconName: "text-x-generic"
     property bool isImage: false
+    property bool canPreview: false
     property bool selected: false
     property string uriPayload: ""
     property bool dragging: false
@@ -21,7 +22,7 @@ Item {
     readonly property int thumbEdge: Math.max(96, Math.round(iconPx * 160 / 56))
     /// M3 shape.corner.large — matches Material image thumbnails.
     readonly property real previewRadius: Math.max(10, Math.round(iconPx * 16 / 56))
-    readonly property bool showPreview: !root.isDir && root.isImage && Browser.showImagePreviews
+    readonly property bool showPreview: !root.isDir && (root.canPreview || root.isImage) && Browser.showImagePreviews
     readonly property var folderPreviewList: {
         const _ = Browser.folderPreviewsRevision
         if (!root.isDir || !Browser.showFolderPreviews)
@@ -29,6 +30,15 @@ Item {
         return Browser.folderPreviewPaths(root.path, 4)
     }
     readonly property bool hasFolderMosaic: folderPreviewList.length > 0
+    // 1–2 tiles = one row; slight nudge into the folder pocket (not the bottom edge).
+    readonly property int mosaicYOffset: {
+        const n = folderPreviewList.length
+        if (n <= 0)
+            return 0
+        if (n <= 2)
+            return Math.max(4, Math.round(iconPx * 6 / 56))
+        return Math.max(2, Math.round(iconPx * 3 / 56))
+    }
     readonly property string placeSymbol: {
         const _ = Browser.folderIconsRevision
         return root.isDir ? Browser.folderSymbol(root.path) : ""
@@ -84,12 +94,15 @@ Item {
         scale: 1 + root.dropGrow * 0.18
         Item {
             anchors.fill: parent
+            // Keep the loader alive while we try; only paint plate+image on success
+            // so a failed .blend thumb doesn't leave a grey shape behind the MIME icon.
             visible: root.showPreview
 
             Rectangle {
                 anchors.fill: parent
                 radius: root.previewRadius
                 color: Theme.surfaceContainerHighest
+                visible: previewImage.status === Image.Ready
             }
 
             Image {
@@ -137,15 +150,13 @@ Item {
             }
             sourceSize.width: root.iconPx * 2
             sourceSize.height: root.iconPx * 2
-            // Soften the folder face when the mosaic sits on top.
-            opacity: root.hasFolderMosaic ? 0.55 : 1
         }
-        // Dolphin-style 2×2 image mosaic over the folder icon.
+        // Dolphin-style 2×2 image mosaic over the folder icon (no dimming of the face).
         Grid {
             id: folderMosaic
             visible: root.hasFolderMosaic
             anchors.centerIn: parent
-            anchors.verticalCenterOffset: 2
+            anchors.verticalCenterOffset: root.mosaicYOffset
             columns: 2
             rowSpacing: 2
             columnSpacing: 2
@@ -160,6 +171,7 @@ Item {
                         anchors.fill: parent
                         radius: 4
                         color: Theme.surfaceContainerHighest
+                        visible: tile.status === Image.Ready
                     }
 
                     Image {

@@ -16,7 +16,7 @@ Explorador de archivos **Material You** para [Sylphrena](https://github.com/iMac
 - **Selección** — clic, Ctrl+clic, marco; RMB conserva multi-selección
 - **Portapapeles** — copiar / cortar / pegar; papelera freedesktop; deshacer
 - **Arrastre** — mover/copiar entre carpetas; soltar en favoritos para anclar
-- **Previsualizaciones** — thumbs de imágenes; mosaico 2×2 en iconos de carpeta (opt-in)
+- **Previsualizaciones** — thumbs FreeDesktop (imágenes + `.thumbnailer` por MIME, p. ej. Blender); mosaico 2×2 en carpetas (opt-in)
 - **Tamaño de iconos** — slider en ⋮ (5 pasos: 48–80 px; por defecto 64)
 - **Menú contextual** — abrir, propiedades, icono de carpeta, abrir con…
 - **Chrome** — botones nueva carpeta / subir / actualizar mostrables u ocultables desde ⋮
@@ -38,7 +38,13 @@ make install
 
 ## Miniaturas
 
-Con *Previsualizar* activo: `image://thumb` → caché JPEG en `~/.cache/Sylphrena/Seeker/thumbs/` (~256 MiB, poda LRU).
+Con *Previsualizar* activo, `image://thumb` resuelve en este orden (estilo Dolphin):
+
+1. Decode nativo Qt (`QImageReader`) para formatos imagen.
+2. Caché shared FreeDesktop `~/.cache/thumbnails/{normal,large,…}/`.
+3. Thumbnailers XDG (`~/.local/share/thumbnailers/*.thumbnailer` y `/usr/share/…`) por MIME (extensión antes que content-sniff; los `.blend` zstd cuentan como `application/x-blender`).
+
+Caché propia de Seeker: `~/.cache/seeker/thumbs/` (~256 MiB, poda LRU). Los thumbs generados también se publican en la caché shared.
 
 ## FileChooser (portal)
 
