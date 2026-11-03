@@ -31,6 +31,9 @@ class BrowserController : public QObject {
     Q_PROPERTY(bool showUpButton READ showUpButton WRITE setShowUpButton NOTIFY showUpButtonChanged)
     Q_PROPERTY(bool showRefreshButton READ showRefreshButton WRITE setShowRefreshButton NOTIFY showRefreshButtonChanged)
     Q_PROPERTY(bool showNewFolderButton READ showNewFolderButton WRITE setShowNewFolderButton NOTIFY showNewFolderButtonChanged)
+    /// Grid/list icon size step: 0…4 → 48/56/64/72/80 px (default 2 = 64).
+    Q_PROPERTY(int iconSizeStep READ iconSizeStep WRITE setIconSizeStep NOTIFY iconSizeStepChanged)
+    Q_PROPERTY(int iconSize READ iconSize NOTIFY iconSizeStepChanged)
     Q_PROPERTY(int selectionCount READ selectionCount NOTIFY selectionChanged)
     Q_PROPERTY(bool selectionIsDir READ selectionIsDir NOTIFY selectionChanged)
     Q_PROPERTY(bool canUndo READ canUndo NOTIFY undoChanged)
@@ -68,6 +71,9 @@ public:
     void setShowRefreshButton(bool show);
     bool showNewFolderButton() const { return m_showNewFolderButton; }
     void setShowNewFolderButton(bool show);
+    int iconSizeStep() const { return m_iconSizeStep; }
+    void setIconSizeStep(int step);
+    int iconSize() const;
     int selectionCount() const { return m_selected.size(); }
     bool selectionIsDir() const;
     bool canUndo() const { return !m_undo.isEmpty(); }
@@ -152,6 +158,7 @@ signals:
     void showUpButtonChanged();
     void showRefreshButtonChanged();
     void showNewFolderButtonChanged();
+    void iconSizeStepChanged();
     void undoChanged();
     void errorOccurred(const QString &message);
     void folderCreated(const QString &path);
@@ -220,6 +227,7 @@ private:
     bool m_showUpButton = false;
     bool m_showRefreshButton = false;
     bool m_showNewFolderButton = true;
+    int m_iconSizeStep = 2; // 64 px
     mutable int m_folderPreviewsRevision = 0;
     struct FolderPreviewCacheEntry {
         qint64 dirMtime = -1;

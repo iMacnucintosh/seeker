@@ -15,8 +15,12 @@ Item {
     /// Set from Main via dropTargetPath (delegate DropAreas miss internal drags).
     property bool dropHover: false
     property real dropGrow: dropHover ? 1 : 0
+    readonly property int iconPx: Browser.iconSize
+    readonly property int mosaicPx: Math.max(14, Math.round(iconPx * 22 / 56))
+    readonly property int badgePx: Math.max(12, Math.round(iconPx * 20 / 56))
+    readonly property int thumbEdge: Math.max(96, Math.round(iconPx * 160 / 56))
     /// M3 shape.corner.large — matches Material image thumbnails.
-    readonly property real previewRadius: 16
+    readonly property real previewRadius: Math.max(10, Math.round(iconPx * 16 / 56))
     readonly property bool showPreview: !root.isDir && root.isImage && Browser.showImagePreviews
     readonly property var folderPreviewList: {
         const _ = Browser.folderPreviewsRevision
@@ -40,8 +44,8 @@ Item {
         onTriggered: root.renameRequested()
     }
 
-    width: 112
-    height: 118
+    width: iconPx * 2
+    height: iconPx * 2 + 6
 
     Behavior on dropGrow {
         NumberAnimation {
@@ -73,9 +77,9 @@ Item {
         id: iconSlot
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: parent.top
-        anchors.topMargin: 10
-        width: 56
-        height: 56
+        anchors.topMargin: Math.max(6, Math.round(iconPx * 10 / 56))
+        width: root.iconPx
+        height: root.iconPx
         opacity: root.dragging ? 0 : 1
         scale: 1 + root.dropGrow * 0.18
         Item {
@@ -92,12 +96,12 @@ Item {
                 id: previewImage
                 anchors.fill: parent
                 // Disk-backed thumbs via image://thumb (see ThumbnailProvider).
-                source: root.showPreview ? Browser.thumbUrl(root.path, 160) : ""
+                source: root.showPreview ? Browser.thumbUrl(root.path, root.thumbEdge) : ""
                 fillMode: Image.PreserveAspectCrop
                 asynchronous: true
                 cache: true
-                sourceSize.width: 160
-                sourceSize.height: 160
+                sourceSize.width: root.thumbEdge
+                sourceSize.height: root.thumbEdge
                 visible: status === Image.Ready
                 layer.enabled: true
                 layer.effect: MultiEffect {
@@ -124,15 +128,15 @@ Item {
         Image {
             id: iconImage
             anchors.centerIn: parent
-            width: 56
-            height: 56
+            width: root.iconPx
+            height: root.iconPx
             visible: !root.showPreview || previewImage.status !== Image.Ready
             source: {
                 const _ = Theme.primaryContainer // refresh when scheme changes
                 return root.iconName ? Browser.iconUrl(root.iconName) : ""
             }
-            sourceSize.width: 112
-            sourceSize.height: 112
+            sourceSize.width: root.iconPx * 2
+            sourceSize.height: root.iconPx * 2
             // Soften the folder face when the mosaic sits on top.
             opacity: root.hasFolderMosaic ? 0.55 : 1
         }
@@ -149,8 +153,8 @@ Item {
                 model: root.folderPreviewList
                 delegate: Item {
                     required property string modelData
-                    width: 22
-                    height: 22
+                    width: root.mosaicPx
+                    height: root.mosaicPx
 
                     Rectangle {
                         anchors.fill: parent
@@ -161,12 +165,12 @@ Item {
                     Image {
                         id: tile
                         anchors.fill: parent
-                        source: Browser.thumbUrl(modelData, 64)
+                        source: Browser.thumbUrl(modelData, Math.max(48, root.mosaicPx * 3))
                         fillMode: Image.PreserveAspectCrop
                         asynchronous: true
                         cache: true
-                        sourceSize.width: 64
-                        sourceSize.height: 64
+                        sourceSize.width: Math.max(48, root.mosaicPx * 3)
+                        sourceSize.height: Math.max(48, root.mosaicPx * 3)
                         visible: status === Image.Ready
                         layer.enabled: true
                         layer.effect: MultiEffect {
@@ -196,9 +200,9 @@ Item {
             visible: root.placeSymbol.length > 0 && !root.showPreview && !root.hasFolderMosaic
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.verticalCenter: parent.verticalCenter
-            anchors.verticalCenterOffset: 5
+            anchors.verticalCenterOffset: Math.max(3, Math.round(root.iconPx * 5 / 56))
             icon: root.placeSymbol
-            size: 20
+            size: root.badgePx
             fill: 0
             colour: Theme.onPrimaryContainer
             opacity: 0.92
@@ -269,12 +273,13 @@ Item {
                 if (Browser.selectedPaths.indexOf(root.path) < 0)
                     Browser.selectedPaths = [root.path]
                 root.uriPayload = Browser.uriList(Browser.selectedPaths)
+                const grab = Math.max(80, root.iconPx * 2)
                 iconSlot.grabToImage((result) => {
                     root.Drag.imageSource = result.url
                     root.Drag.hotSpot.x = result.width / 2
                     root.Drag.hotSpot.y = result.height / 2
                     root.dragging = true
-                }, Qt.size(112, 112))
+                }, Qt.size(grab, grab))
             } else {
                 root.dragging = false
                 root.Drag.imageSource = ""

@@ -9,6 +9,52 @@
 #include <QSaveFile>
 #include <QUrl>
 
+namespace {
+
+/// Portal / callers often pass English GTK labels ("_Select"). Seeker UI is ES.
+QString localizeAcceptLabel(QString label) {
+    label = label.trimmed();
+    while (label.startsWith(QLatin1Char('_')))
+        label.remove(0, 1);
+    const QString lower = label.toLower();
+    if (label.isEmpty() || lower == QLatin1String("select") || lower == QLatin1String("open")
+        || lower == QLatin1String("choose") || lower == QLatin1String("ok"))
+        return QStringLiteral("Seleccionar");
+    if (lower == QLatin1String("save") || lower == QLatin1String("save as"))
+        return QStringLiteral("Guardar");
+    if (lower == QLatin1String("cancel"))
+        return QStringLiteral("Cancelar");
+    return label;
+}
+
+QString localizePickTitle(QString title) {
+    title = title.trimmed();
+    while (title.startsWith(QLatin1Char('_')))
+        title.remove(0, 1);
+    const QString lower = title.toLower();
+    if (title.isEmpty())
+        return QStringLiteral("Seleccionar");
+    if (lower == QLatin1String("select a file") || lower == QLatin1String("open file")
+        || lower == QLatin1String("open files"))
+        return QStringLiteral("Seleccionar archivo");
+    if (lower == QLatin1String("select a folder") || lower == QLatin1String("select folder")
+        || lower == QLatin1String("open folder"))
+        return QStringLiteral("Seleccionar carpeta");
+    if (lower == QLatin1String("select an image") || lower == QLatin1String("select image"))
+        return QStringLiteral("Seleccionar imagen");
+    if (lower == QLatin1String("select a wallpaper") || lower == QLatin1String("choose wallpaper"))
+        return QStringLiteral("Seleccionar fondo");
+    if (lower == QLatin1String("choose icon") || lower == QLatin1String("select icon"))
+        return QStringLiteral("Elegir icono");
+    if (lower == QLatin1String("select a profile picture"))
+        return QStringLiteral("Seleccionar foto de perfil");
+    if (lower == QLatin1String("save file") || lower == QLatin1String("save as"))
+        return QStringLiteral("Guardar archivo");
+    return title;
+}
+
+} // namespace
+
 PickController::PickController(QObject *parent)
     : QObject(parent) {}
 
@@ -18,8 +64,8 @@ void PickController::configure(bool active, const QString &mode, bool multiple, 
     m_active = active;
     m_mode = mode.isEmpty() ? QStringLiteral("file") : mode;
     m_multiple = multiple;
-    m_title = title;
-    m_acceptLabel = acceptLabel.isEmpty() ? QStringLiteral("Seleccionar") : acceptLabel;
+    m_title = localizePickTitle(title);
+    m_acceptLabel = localizeAcceptLabel(acceptLabel);
     m_suggestedName = suggestedName;
     m_resultPath = resultPath;
     m_extensions.clear();

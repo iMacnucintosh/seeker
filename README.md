@@ -17,6 +17,7 @@ Explorador de archivos **Material You** para [Sylphrena](https://github.com/iMac
 - **Portapapeles** — copiar / cortar / pegar; papelera freedesktop; deshacer
 - **Arrastre** — mover/copiar entre carpetas; soltar en favoritos para anclar
 - **Previsualizaciones** — thumbs de imágenes; mosaico 2×2 en iconos de carpeta (opt-in)
+- **Tamaño de iconos** — slider en ⋮ (5 pasos: 48–80 px; por defecto 64)
 - **Menú contextual** — abrir, propiedades, icono de carpeta, abrir con…
 - **Chrome** — botones nueva carpeta / subir / actualizar mostrables u ocultables desde ⋮
 - **Tema** — Material You en vivo desde Sylphrena (`theme.json`)
