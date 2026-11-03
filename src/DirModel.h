@@ -11,6 +11,8 @@ struct DirEntry {
     bool isDir = false;
     bool isHidden = false;
     bool isImage = false;
+    /// Image or MIME with a FreeDesktop thumbnailer (Dolphin-style previews).
+    bool canPreview = false;
     qint64 size = 0;
     QDateTime modified;
     QString mimeIcon;
@@ -33,6 +35,7 @@ public:
         ModifiedTextRole,
         IconNameRole,
         IsImageRole,
+        CanPreviewRole,
     };
 
     explicit DirModel(QObject *parent = nullptr);

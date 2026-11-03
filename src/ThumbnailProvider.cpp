@@ -1,4 +1,5 @@
 #include "ThumbnailProvider.h"
+#include "Thumbnailers.h"
 
 #include <QCryptographicHash>
 #include <QDateTime>
@@ -72,25 +73,35 @@ void pruneCache(qint64 maxBytes) {
 }
 
 QImage makeThumb(const QString &absPath, int edge) {
+    // 1) Native image decode (JPEG/PNG/… / Qt plugins).
     QImageReader reader(absPath);
     reader.setAutoTransform(true);
-    if (!reader.canRead())
-        return {};
-
-    const QSize orig = reader.size();
-    if (orig.isValid() && !orig.isEmpty()) {
-        QSize target = orig;
-        target.scale(edge, edge, Qt::KeepAspectRatio);
-        if (target.width() < orig.width() || target.height() < orig.height())
-            reader.setScaledSize(target);
+    if (reader.canRead()) {
+        const QSize orig = reader.size();
+        if (orig.isValid() && !orig.isEmpty()) {
+            QSize target = orig;
+            target.scale(edge, edge, Qt::KeepAspectRatio);
+            if (target.width() < orig.width() || target.height() < orig.height())
+                reader.setScaledSize(target);
+        }
+        QImage img = reader.read();
+        if (!img.isNull()) {
+            if (img.width() > edge || img.height() > edge)
+                img = img.scaled(edge, edge, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+            return img;
+        }
     }
 
-    QImage img = reader.read();
-    if (img.isNull())
-        return {};
-    if (img.width() > edge || img.height() > edge)
-        img = img.scaled(edge, edge, Qt::KeepAspectRatio, Qt::SmoothTransformation);
-    return img;
+    // 2) Shared FreeDesktop cache (~/.cache/thumbnails) — same as Dolphin/Nautilus.
+    QImage shared = Thumbnailers::loadShared(absPath, edge);
+    if (!shared.isNull())
+        return shared;
+
+    // 3) Generic .thumbnailer by MIME (Blender, STL, …) — extension before content.
+    if (const Thumbnailers::Entry *entry = Thumbnailers::instance().entryForFile(absPath))
+        return Thumbnailers::run(*entry, absPath, edge);
+
+    return {};
 }
 
 /// Qt-recommended: response is also the runnable.

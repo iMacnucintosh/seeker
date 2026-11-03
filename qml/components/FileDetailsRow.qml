@@ -10,6 +10,7 @@ Item {
     property bool isDir: false
     property string iconName: "text-x-generic"
     property bool isImage: false
+    property bool canPreview: false
     property string sizeText: ""
     property string modifiedText: ""
     property bool selected: false
@@ -21,7 +22,7 @@ Item {
     readonly property int badgePx: Math.max(8, Math.round(iconPx * 10 / 20))
     readonly property int thumbEdge: Math.max(32, iconPx * 2)
     readonly property real previewRadius: Math.max(4, Math.round(iconPx * 6 / 20))
-    readonly property bool showPreview: !root.isDir && root.isImage && Browser.showImagePreviews
+    readonly property bool showPreview: !root.isDir && (root.canPreview || root.isImage) && Browser.showImagePreviews
     readonly property string placeSymbol: {
         const _ = Browser.folderIconsRevision
         return root.isDir ? Browser.folderSymbol(root.path) : ""
@@ -84,6 +85,7 @@ Item {
                     anchors.fill: parent
                     radius: root.previewRadius
                     color: Theme.surfaceContainerHighest
+                    visible: previewImage.status === Image.Ready
                 }
                 Image {
                     id: previewImage
