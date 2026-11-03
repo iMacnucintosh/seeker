@@ -17,7 +17,10 @@ Item {
     property bool dragging: false
     property bool dropHover: false
     property real dropGrow: dropHover ? 1 : 0
-    readonly property real previewRadius: 6
+    readonly property int iconPx: Math.max(16, Math.round(Browser.iconSize * 20 / 56))
+    readonly property int badgePx: Math.max(8, Math.round(iconPx * 10 / 20))
+    readonly property int thumbEdge: Math.max(32, iconPx * 2)
+    readonly property real previewRadius: Math.max(4, Math.round(iconPx * 6 / 20))
     readonly property bool showPreview: !root.isDir && root.isImage && Browser.showImagePreviews
     readonly property string placeSymbol: {
         const _ = Browser.folderIconsRevision
@@ -33,8 +36,8 @@ Item {
         onTriggered: root.renameRequested()
     }
 
-    height: 32
-    implicitHeight: 32
+    height: Math.max(32, iconPx + 12)
+    implicitHeight: height
 
     Behavior on dropGrow {
         NumberAnimation {
@@ -69,8 +72,8 @@ Item {
 
         Item {
             id: iconSlot
-            Layout.preferredWidth: 20
-            Layout.preferredHeight: 20
+            Layout.preferredWidth: root.iconPx
+            Layout.preferredHeight: root.iconPx
             Layout.alignment: Qt.AlignVCenter
             opacity: root.dragging ? 0 : 1
 
@@ -85,12 +88,12 @@ Item {
                 Image {
                     id: previewImage
                     anchors.fill: parent
-                    source: root.showPreview ? Browser.thumbUrl(root.path, 40) : ""
+                    source: root.showPreview ? Browser.thumbUrl(root.path, root.thumbEdge) : ""
                     fillMode: Image.PreserveAspectCrop
                     asynchronous: true
                     cache: true
-                    sourceSize.width: 40
-                    sourceSize.height: 40
+                    sourceSize.width: root.thumbEdge
+                    sourceSize.height: root.thumbEdge
                     visible: status === Image.Ready
                     layer.enabled: true
                     layer.effect: MultiEffect {
@@ -114,22 +117,22 @@ Item {
             }
             Image {
                 anchors.centerIn: parent
-                width: 18
-                height: 18
+                width: Math.max(14, root.iconPx - 2)
+                height: Math.max(14, root.iconPx - 2)
                 visible: !root.showPreview || previewImage.status !== Image.Ready
                 source: {
                     const _ = Theme.primaryContainer
                     return root.iconName ? Browser.iconUrl(root.iconName) : ""
                 }
-                sourceSize.width: 36
-                sourceSize.height: 36
+                sourceSize.width: root.iconPx * 2
+                sourceSize.height: root.iconPx * 2
             }
             MaterialIcon {
                 visible: root.placeSymbol.length > 0 && !root.showPreview
                 anchors.centerIn: parent
                 anchors.verticalCenterOffset: 1
                 icon: root.placeSymbol
-                size: 10
+                size: root.badgePx
                 fill: 0
                 colour: Theme.onPrimaryContainer
                 opacity: 0.92

@@ -250,7 +250,11 @@ Item {
                 const p = menuCol.mapFromItem(panelMa, px, py)
                 for (let i = 0; i < menuCol.children.length; ++i) {
                     const it = menuCol.children[i]
-                    if (!it || typeof it.clicked !== "function")
+                    if (!it)
+                        continue
+                    const interactive = typeof it.clicked === "function"
+                        || typeof it.applyAt === "function"
+                    if (!interactive)
                         continue
                     if (p.x >= 0 && p.x < menuCol.width
                             && p.y >= it.y && p.y < it.y + it.height)
@@ -276,6 +280,11 @@ Item {
                 const found = rowAtFromPanel(px, py)
                 if (!found || !found.enabled)
                     return
+                if (typeof found.applyAt === "function") {
+                    const local = found.mapFromItem(panelMa, px, py)
+                    found.applyAt(local.x, local.y)
+                    return
+                }
                 found.clicked()
                 // Keep open for toggles so the switch state is visible.
                 if (found.checkable)
@@ -283,6 +292,20 @@ Item {
                 root.suppressHover = true
                 root.closeMenu()
             }
+
+            function scrubAt(px, py) {
+                const found = sliding ? hoverItem : rowAtFromPanel(px, py)
+                if (!found || !found.enabled || typeof found.applyAt !== "function")
+                    return false
+                hoverItem = found
+                hoverPill.y = found.y
+                hoverPill.height = found.height
+                const local = found.mapFromItem(panelMa, px, py)
+                found.applyAt(local.x, local.y)
+                return true
+            }
+
+            property bool sliding: false
 
             Rectangle {
                 id: hoverPill
@@ -330,13 +353,35 @@ Item {
             cursorShape: Qt.PointingHandCursor
             z: 2
             onContainsMouseChanged: {
-                if (!containsMouse)
+                if (!containsMouse) {
+                    menuHost.sliding = false
                     menuHost.clearHover()
+                }
                 root.syncHoverOpen()
             }
-            onPositionChanged: (mouse) => menuHost.setHoverFromPanel(mouse.x, mouse.y)
+            onPressed: (mouse) => {
+                const found = menuHost.rowAtFromPanel(mouse.x, mouse.y)
+                if (found && found.enabled && typeof found.applyAt === "function") {
+                    menuHost.sliding = true
+                    menuHost.scrubAt(mouse.x, mouse.y)
+                }
+            }
+            onPositionChanged: (mouse) => {
+                if (menuHost.sliding && pressed)
+                    menuHost.scrubAt(mouse.x, mouse.y)
+                else
+                    menuHost.setHoverFromPanel(mouse.x, mouse.y)
+            }
+            onReleased: () => { menuHost.sliding = false }
+            onCanceled: () => { menuHost.sliding = false }
             onEntered: menuHost.setHoverFromPanel(mouseX, mouseY)
-            onClicked: (mouse) => menuHost.activateAt(mouse.x, mouse.y)
+            onClicked: (mouse) => {
+                if (menuHost.sliding) {
+                    menuHost.sliding = false
+                    return
+                }
+                menuHost.activateAt(mouse.x, mouse.y)
+            }
         }
     }
 
@@ -390,6 +435,108 @@ Item {
                 size: 22
                 fill: row.checked ? 1 : 0
                 colour: row.checked ? Theme.primary : Theme.onSurfaceVariant
+            }
+        }
+    }
+
+    // Stepped size control — drag or click; keeps the menu open.
+    component MenuSlider: Item {
+        id: slide
+        property string icon: "photo_size_select_large"
+        property string label: ""
+        property int value: 0
+        property int from: 0
+        property int to: 4
+        property bool dangerous: false
+        property bool checkable: false
+        property bool checked: false
+        signal clicked()
+        signal valueEdited(int value)
+
+        readonly property int steps: Math.max(1, to - from)
+
+        width: parent ? parent.width : 280
+        height: 44
+        opacity: enabled ? 1 : 0.38
+
+        function applyAt(lx, ly) {
+            const p = track.mapFromItem(slide, lx, ly)
+            const t = track.width > 0 ? Math.max(0, Math.min(1, p.x / track.width)) : 0
+            const next = from + Math.round(t * steps)
+            if (next === slide.value)
+                return
+            slide.value = next
+            slide.valueEdited(next)
+        }
+
+        Row {
+            id: slideRow
+            anchors.fill: parent
+            anchors.leftMargin: 10
+            anchors.rightMargin: 10
+            spacing: 10
+
+            MaterialIcon {
+                anchors.verticalCenter: parent.verticalCenter
+                width: 22
+                icon: slide.icon
+                size: 20
+                colour: Theme.onSurfaceVariant
+            }
+            StyledText {
+                anchors.verticalCenter: parent.verticalCenter
+                width: 72
+                text: slide.label
+                color: Theme.onSurface
+                font.pixelSize: 14
+                elide: Text.ElideRight
+            }
+            Item {
+                id: track
+                anchors.verticalCenter: parent.verticalCenter
+                width: Math.max(80, slideRow.width - 22 - 72 - 20)
+                height: 24
+
+                Rectangle {
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: parent.width
+                    height: 4
+                    radius: 2
+                    color: Theme.surfaceContainerHighest
+                }
+
+                Repeater {
+                    model: slide.steps + 1
+                    delegate: Rectangle {
+                        required property int index
+                        anchors.verticalCenter: parent.verticalCenter
+                        x: slide.steps > 0
+                           ? index * (track.width - 8) / slide.steps
+                           : 0
+                        width: 8
+                        height: 8
+                        radius: 4
+                        color: index <= (slide.value - slide.from)
+                               ? Theme.primary
+                               : Theme.outlineVariant
+                    }
+                }
+
+                Rectangle {
+                    id: thumb
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: 16
+                    height: 16
+                    radius: 8
+                    color: Theme.primary
+                    x: slide.steps > 0
+                       ? (slide.value - slide.from) * (track.width - 16) / slide.steps
+                       : 0
+
+                    Behavior on x {
+                        NumberAnimation { duration: 120; easing.type: Easing.OutCubic }
+                    }
+                }
             }
         }
     }

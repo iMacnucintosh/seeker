@@ -242,6 +242,7 @@ class Portal:
                 current=current,
                 suggested=suggested,
                 save_names=save_names,
+                filters=options.get("filters"),
             )
             request.unregister()
 
@@ -263,6 +264,7 @@ class Portal:
         current: str,
         suggested: str,
         save_names: list[str],
+        filters=None,
     ) -> tuple[int, dict]:
         if request.cancelled:
             return 1, {}
@@ -287,7 +289,6 @@ class Portal:
             cmd.append(f"--pick-name={suggested}")
 
         # Optional filters → --pick-extensions (ignore glob patterns for v1).
-        filters = options.get("filters")
         exts: list[str] = []
         if filters:
             try:

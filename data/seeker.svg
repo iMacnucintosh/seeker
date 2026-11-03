@@ -1,50 +1,52 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
   <defs>
-    <linearGradient id="bg" x1="18" y1="8" x2="110" y2="120" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#9A7A55"/>
-      <stop offset="0.55" stop-color="#75593B"/>
-      <stop offset="1" stop-color="#5A4129"/>
-    </linearGradient>
-    <linearGradient id="folder" x1="30" y1="36" x2="98" y2="100" gradientUnits="userSpaceOnUse">
+    <linearGradient id="folder" x1="26" y1="34" x2="102" y2="108" gradientUnits="userSpaceOnUse">
       <stop stop-color="#FFFBF7"/>
-      <stop offset="1" stop-color="#E8D5C4"/>
+      <stop offset="0.5" stop-color="#F0DFD0"/>
+      <stop offset="1" stop-color="#D4B89E"/>
     </linearGradient>
-    <linearGradient id="tab" x1="40" y1="30" x2="72" y2="48" gradientUnits="userSpaceOnUse">
+    <linearGradient id="tab" x1="32" y1="28" x2="78" y2="48" gradientUnits="userSpaceOnUse">
       <stop stop-color="#FFF8F2"/>
-      <stop offset="1" stop-color="#DCC4AE"/>
+      <stop offset="1" stop-color="#E0C8B0"/>
     </linearGradient>
-    <linearGradient id="lens" x1="78" y1="70" x2="108" y2="104" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#5A4129"/>
-      <stop offset="1" stop-color="#3D2B1A"/>
+    <linearGradient id="front" x1="26" y1="58" x2="102" y2="104" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F5E6D8"/>
+      <stop offset="1" stop-color="#C4A88E"/>
     </linearGradient>
-    <filter id="soft" x="-20%" y="-20%" width="140%" height="140%" color-interpolation-filters="sRGB">
-      <feDropShadow dx="0" dy="2" stdDeviation="2.2" flood-color="#2A1A0C" flood-opacity="0.28"/>
+    <linearGradient id="star" x1="48" y1="56" x2="96" y2="100" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#9AF5F1"/>
+      <stop offset="1" stop-color="#2FA8A3"/>
+    </linearGradient>
+    <filter id="soft" x="-30%" y="-30%" width="160%" height="160%" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="2.5" stdDeviation="2.5" flood-color="#2A1A0C" flood-opacity="0.30"/>
     </filter>
   </defs>
 
-  <!-- Squircle -->
-  <rect width="128" height="128" rx="28" fill="url(#bg)"/>
-
-  <!-- Soft highlight -->
-  <path d="M28 18c18-8 54-8 72 0 10 4 16 12 16 22 0-18-20-28-52-28S12 22 12 40c0-10 6-18 16-22z"
-        fill="#ffffff" opacity="0.10"/>
-
-  <!-- Folder tab -->
+  <!-- Tab -->
   <path filter="url(#soft)"
-        d="M34 46c0-5.5 4.5-10 10-10h18.5c2.4 0 4.6 1.1 6.1 2.9L74 46H34z"
+        d="M31 43c0-5.2 4.2-9.4 9.4-9.4h21.2c2.5 0 4.9 1.1 6.5 3.1L76 45.5H31z"
         fill="url(#tab)"/>
 
-  <!-- Folder body -->
+  <!-- Body -->
   <path filter="url(#soft)"
-        d="M28 50c0-5.523 4.477-10 10-10h52c5.523 0 10 4.477 10 10v36c0 5.523-4.477 10-10 10H38c-5.523 0-10-4.477-10-10V50z"
+        d="M24 49.5c0-5.523 4.477-10 10-10h60c5.523 0 10 4.477 10 10v41c0 5.523-4.477 10-10 10H34c-5.523 0-10-4.477-10-10v-41z"
         fill="url(#folder)"/>
 
-  <!-- Inner pocket line -->
-  <path d="M40 62h48" stroke="#75593B" stroke-opacity="0.22" stroke-width="3" stroke-linecap="round"/>
+  <!-- Front panel -->
+  <path d="M24 60c3 3.8 9.2 6.2 18 6.2h44c8.8 0 15-2.4 18-6.2v30.5c0 5.523-4.477 10-10 10H34c-5.523 0-10-4.477-10-10V60z"
+        fill="url(#front)" opacity="0.5"/>
 
-  <!-- Magnifier badge -->
-  <circle cx="90" cy="86" r="20" fill="url(#lens)" filter="url(#soft)"/>
-  <circle cx="90" cy="86" r="20" fill="#ffffff" opacity="0.06"/>
-  <circle cx="88" cy="83" r="9.5" stroke="#F5E6D8" stroke-width="3.5" fill="none"/>
-  <path d="M95 90.5L104 100" stroke="#F5E6D8" stroke-width="3.5" stroke-linecap="round"/>
+  <!-- Top sheen -->
+  <path d="M36 52.5c10-3.2 32-3.6 50 0 1.6 0.3 2.7 1.7 2.7 3.3 0 0.35-0.3 0.6-0.65 0.52-14-2.6-36-2.5-54.4 0-0.35 0.08-0.65-0.17-0.65-0.52 0-1.5 0.95-2.9 3-3.3z"
+        fill="#ffffff" opacity="0.5"/>
+
+  <!-- Sylphrena three sparkles -->
+  <g fill="url(#star)">
+    <!-- Main -->
+    <path d="M64 56.5c1.1 8.2 5.4 12.8 13.5 14.2-0.15 0.15-0.15 1.65 0 1.8-8.1 1.4-12.4 6-13.5 14.2-0.12 0.72-1.48 0.72-1.6 0-1.1-8.2-5.4-12.8-13.5-14.2 0.15-0.15 0.15-1.65 0-1.8 8.1-1.4 12.4-6 13.5-14.2 0.12-0.72 1.48-0.72 1.6 0z"/>
+    <!-- Upper right -->
+    <path d="M86.5 49c0.7 5.1 3.3 7.9 8.4 8.8-0.1 0.1-0.1 1.05 0 1.15-5.1 0.9-7.7 3.7-8.4 8.8-0.08 0.48-0.97 0.48-1.05 0-0.7-5.1-3.3-7.9-8.4-8.8 0.1-0.1 0.1-1.05 0-1.15 5.1-0.9 7.7-3.7 8.4-8.8 0.08-0.48 0.97-0.48 1.05 0z"/>
+    <!-- Lower right -->
+    <path d="M91 80c0.5 3.7 2.4 5.7 6.1 6.3-0.07 0.07-0.07 0.78 0 0.85-3.7 0.6-5.6 2.6-6.1 6.3-0.06 0.36-0.72 0.36-0.78 0-0.5-3.7-2.4-5.7-6.1-6.3 0.07-0.07 0.07-0.78 0-0.85 3.7-0.6 5.6-2.6 6.1-6.3 0.06-0.36 0.72-0.36 0.78 0z"/>
+  </g>
 </svg>

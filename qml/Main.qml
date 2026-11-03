@@ -369,6 +369,14 @@ ApplicationWindow {
                         checked: Browser.showFolderPreviews
                         onClicked: Browser.showFolderPreviews = !Browser.showFolderPreviews
                     }
+                    BloomMenu.MenuSlider {
+                        icon: "photo_size_select_large"
+                        label: "Tamaño"
+                        from: 0
+                        to: 4
+                        value: Browser.iconSizeStep
+                        onValueEdited: (v) => Browser.iconSizeStep = v
+                    }
                     BloomMenu.MenuRow {
                         icon: "arrow_upward"
                         label: "Botón subir"
@@ -853,8 +861,8 @@ ApplicationWindow {
                         visible: Browser.viewMode === "grid"
                         clip: true
                         model: Browser.model
-                        cellWidth: 112
-                        cellHeight: 118
+                        cellWidth: Browser.iconSize * 2
+                        cellHeight: Browser.iconSize * 2 + 6
                         boundsBehavior: Flickable.StopAtBounds
                         interactive: !gridMarquee.selecting
 

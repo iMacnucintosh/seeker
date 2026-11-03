@@ -367,6 +367,22 @@ void BrowserController::setShowNewFolderButton(bool show) {
     saveSettings();
 }
 
+int BrowserController::iconSize() const {
+    // 48 → 56 → 64 (default) → 72 → 80
+    static const int kSizes[] = {48, 56, 64, 72, 80};
+    const int i = qBound(m_iconSizeStep, 0, 4);
+    return kSizes[i];
+}
+
+void BrowserController::setIconSizeStep(int step) {
+    const int next = qBound(step, 0, 4);
+    if (next == m_iconSizeStep)
+        return;
+    m_iconSizeStep = next;
+    emit iconSizeStepChanged();
+    saveSettings();
+}
+
 void BrowserController::clearFolderPreviewCache() const {
     if (m_folderPreviewCache.isEmpty() && m_folderPreviewsRevision == 0)
         return;
@@ -1234,6 +1250,8 @@ void BrowserController::loadSettings() {
         m_showRefreshButton = obj.value(QStringLiteral("showRefreshButton")).toBool();
     if (obj.contains(QStringLiteral("showNewFolderButton")))
         m_showNewFolderButton = obj.value(QStringLiteral("showNewFolderButton")).toBool();
+    if (obj.contains(QStringLiteral("iconSizeStep")))
+        m_iconSizeStep = qBound(obj.value(QStringLiteral("iconSizeStep")).toInt(2), 0, 4);
     m_pinnedPlaces.clear();
     const QJsonArray pinned = obj.value(QStringLiteral("pinnedPlaces")).toArray();
     for (const QJsonValue &v : pinned) {
@@ -1265,6 +1283,7 @@ void BrowserController::saveSettings() const {
     obj.insert(QStringLiteral("showUpButton"), m_showUpButton);
     obj.insert(QStringLiteral("showRefreshButton"), m_showRefreshButton);
     obj.insert(QStringLiteral("showNewFolderButton"), m_showNewFolderButton);
+    obj.insert(QStringLiteral("iconSizeStep"), m_iconSizeStep);
     QJsonArray pinned;
     for (const QString &p : m_pinnedPlaces)
         pinned.append(p);
