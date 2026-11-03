@@ -1,3 +1,4 @@
 [D-BUS Service]
 Name=org.freedesktop.FileManager1
-Exec=/usr/bin/env seeker --gapplication-service
+# systemd user PATH often lacks ~/.local/bin — expand HOME at spawn time.
+Exec=/bin/sh -c 'exec "$HOME/.local/bin/seeker" --gapplication-service'

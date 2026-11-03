@@ -5,7 +5,9 @@ GenericName=File Manager
 GenericName[es]=Gestor de archivos
 Comment=Seeker — Material You file manager for Sylphrena
 Comment[es]=Seeker — explorador Material You para Sylphrena
-Exec=seeker %U
+# Absolute via $HOME: Cursor/Electron and D-Bus often lack ~/.local/bin in PATH
+# (fallback would hit kitty-open.desktop for inode/directory).
+Exec=/bin/sh -c 'exec "$HOME/.local/bin/seeker" "$@"' sh %U
 Icon=seeker
 Terminal=false
 Type=Application
@@ -20,5 +22,5 @@ X-Seeker-ProductName=Seeker
 [Desktop Action NewWindow]
 Name=New Window
 Name[es]=Nueva ventana
-Exec=seeker --new-window
+Exec=/bin/sh -c 'exec "$HOME/.local/bin/seeker" --new-window'
 Icon=seeker
