@@ -19,6 +19,8 @@
 #include <QUrl>
 #include <QVariant>
 
+#include <algorithm>
+
 namespace {
 
 bool copyRecursively(const QString &src, const QString &dest) {
@@ -623,7 +625,23 @@ void BrowserController::openPath(const QString &path) {
     }
 
     QMimeDatabase db;
-    const QString mime = db.mimeTypeForFile(fi).name();
+    const QMimeType mimeType = db.mimeTypeForFile(fi);
+    const QString mime = mimeType.name();
+
+    // Binaries and AppImages run directly; scripts still go through their handler.
+    static const QStringList runnable = {QStringLiteral("application/x-executable"),
+                                         QStringLiteral("application/x-pie-executable"),
+                                         QStringLiteral("application/vnd.appimage"),
+                                         QStringLiteral("application/x-iso9660-appimage")};
+    if (fi.isExecutable()
+        && std::any_of(runnable.cbegin(), runnable.cend(),
+                       [&](const QString &m) { return mimeType.inherits(m); })) {
+        if (QProcess::startDetached(fi.absoluteFilePath(), {}, fi.absolutePath()))
+            return;
+        emit errorOccurred(tr("No se pudo ejecutar: %1").arg(fi.fileName()));
+        return;
+    }
+
     const QString desktop = OpenWithController::defaultDesktopForMime(mime);
     if (desktop.isEmpty()) {
         // No default handler — Seeker dialog instead of the GTK xdg-open chooser.
