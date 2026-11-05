@@ -9,6 +9,8 @@
 #include <QThreadPool>
 #include <QUrl>
 
+#include <unistd.h>
+
 namespace {
 
 QString rwxTriplet(bool r, bool w, bool x) {
@@ -74,6 +76,8 @@ void PropertiesController::resetUi() {
     m_showContents = false;
     m_sizeReady = false;
     m_isImage = false;
+    m_canToggleExec = false;
+    m_executable = false;
     m_title.clear();
     m_kindLabel.clear();
     m_location.clear();
@@ -116,6 +120,29 @@ void PropertiesController::close() {
     emit openChanged();
 }
 
+bool PropertiesController::setExecutable(bool on) {
+    if (!m_canToggleExec || m_previewPath.isEmpty())
+        return false;
+    using P = QFileDevice::Permission;
+    QFile file(m_previewPath);
+    QFileDevice::Permissions perms = file.permissions();
+    // Mirror chmod +x: grant exec only to classes that can already read.
+    const QPair<P, P> classes[] = {{P::ReadOwner, P::ExeOwner},
+                                   {P::ReadGroup, P::ExeGroup},
+                                   {P::ReadOther, P::ExeOther}};
+    for (const auto &[read, exe] : classes)
+        perms.setFlag(exe, on && perms.testFlag(read));
+    if (!file.setPermissions(perms)) {
+        emit infoChanged();
+        return false;
+    }
+    const QFileInfo fi(m_previewPath);
+    m_executable = fi.permissions().testFlag(P::ExeOwner);
+    m_permissions = formatPermissions(fi.permissions());
+    emit infoChanged();
+    return true;
+}
+
 void PropertiesController::applySnapshot(const QStringList &paths) {
     resetUi();
     m_isMulti = paths.size() > 1;
@@ -142,6 +169,8 @@ void PropertiesController::applySnapshot(const QStringList &paths) {
             const QString icon = mime.iconName();
             m_iconName = icon.isEmpty() ? QStringLiteral("text-x-generic") : icon;
             m_isImage = mime.name().startsWith(QLatin1String("image/"));
+            m_canToggleExec = fi.isFile() && fi.ownerId() == ::getuid();
+            m_executable = fi.permissions().testFlag(QFileDevice::ExeOwner);
             // Plain file size is immediate.
             m_sizeLabel = formatSize(fi.size());
             m_sizeReady = true;

@@ -6,7 +6,7 @@
 #include <QString>
 #include <QStringList>
 
-/// Read-only properties sheet for one or more selected paths.
+/// Properties sheet for one or more selected paths (exec bit is the only editable field).
 class PropertiesController : public QObject {
     Q_OBJECT
     Q_PROPERTY(bool open READ open NOTIFY openChanged)
@@ -25,6 +25,8 @@ class PropertiesController : public QObject {
     Q_PROPERTY(QString iconName READ iconName NOTIFY infoChanged)
     Q_PROPERTY(bool isImage READ isImage NOTIFY infoChanged)
     Q_PROPERTY(QString previewPath READ previewPath NOTIFY infoChanged)
+    Q_PROPERTY(bool canToggleExec READ canToggleExec NOTIFY infoChanged)
+    Q_PROPERTY(bool executable READ executable NOTIFY infoChanged)
 
 public:
     explicit PropertiesController(QObject *parent = nullptr);
@@ -45,9 +47,12 @@ public:
     QString iconName() const { return m_iconName; }
     bool isImage() const { return m_isImage; }
     QString previewPath() const { return m_previewPath; }
+    bool canToggleExec() const { return m_canToggleExec; }
+    bool executable() const { return m_executable; }
 
     Q_INVOKABLE void openPaths(const QStringList &paths);
     Q_INVOKABLE void close();
+    Q_INVOKABLE bool setExecutable(bool on);
 
 signals:
     void openChanged();
@@ -80,6 +85,8 @@ private:
     bool m_showContents = false;
     bool m_sizeReady = false;
     bool m_isImage = false;
+    bool m_canToggleExec = false;
+    bool m_executable = false;
     QString m_title;
     QString m_kindLabel;
     QString m_location;

@@ -220,6 +220,65 @@ Item {
                     label: "Permisos"
                     value: Properties.permissions
                 }
+
+                RowLayout {
+                    visible: Properties.canToggleExec
+                    Layout.fillWidth: true
+                    spacing: 12
+
+                    StyledText {
+                        Layout.fillWidth: true
+                        text: "Permitir ejecutar como programa"
+                        color: Theme.onSurface
+                        font.pixelSize: 13
+                    }
+
+                    Rectangle {
+                        id: execSwitch
+                        readonly property bool checked: Properties.executable
+                        implicitWidth: 52
+                        implicitHeight: 32
+                        radius: height / 2
+                        color: checked ? Theme.primary : Theme.surfaceContainerHighest
+                        border.width: checked ? 0 : 2
+                        border.color: Theme.outline
+
+                        Behavior on color {
+                            ColorAnimation { duration: 150 }
+                        }
+
+                        Rectangle {
+                            width: execSwitch.checked ? 24 : (execArea.pressed ? 28 : 16)
+                            height: width
+                            radius: width / 2
+                            anchors.verticalCenter: parent.verticalCenter
+                            x: execSwitch.checked ? parent.width - width - 4 : (execArea.pressed ? 2 : 8)
+                            color: execSwitch.checked ? Theme.onPrimary : Theme.outline
+
+                            Behavior on x {
+                                NumberAnimation { duration: 180; easing.type: Easing.OutCubic }
+                            }
+                            Behavior on width {
+                                NumberAnimation { duration: 120 }
+                            }
+
+                            MaterialIcon {
+                                anchors.centerIn: parent
+                                visible: execSwitch.checked
+                                icon: "check"
+                                size: 16
+                                colour: Theme.primary
+                            }
+                        }
+
+                        MouseArea {
+                            id: execArea
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: Properties.setExecutable(!execSwitch.checked)
+                        }
+                    }
+                }
             }
         }
 
