@@ -398,6 +398,13 @@ ApplicationWindow {
                         checked: Browser.showNewFolderButton
                         onClicked: Browser.showNewFolderButton = !Browser.showNewFolderButton
                     }
+                    BloomMenu.MenuRow {
+                        icon: "volume_up"
+                        label: "Sonidos"
+                        checkable: true
+                        checked: Browser.soundsEnabled
+                        onClicked: Browser.soundsEnabled = !Browser.soundsEnabled
+                    }
                 }
             }
         }
@@ -568,9 +575,15 @@ ApplicationWindow {
                         StyledText {
                             Layout.fillWidth: true
                             Layout.alignment: Qt.AlignVCenter
-                            text: Browser.trashIsEmpty
-                                ? "La papelera está vacía"
-                                : "Los elementos se eliminarán de forma permanente"
+                            text: {
+                                if (Browser.trashIsEmpty)
+                                    return "La papelera está vacía"
+                                const n = Browser.trashCount
+                                const items = n === 1 ? "1 elemento" : n + " elementos"
+                                const size = Browser.trashStatsBusy && Browser.trashSize === 0
+                                    ? "calculando tamaño…" : Browser.formatSize(Browser.trashSize)
+                                return items + " · " + size + " · se eliminarán de forma permanente"
+                            }
                             color: Theme.onSurfaceVariant
                             font.pixelSize: 13
                             elide: Text.ElideRight
@@ -1565,7 +1578,7 @@ ApplicationWindow {
             anchors.centerIn: parent
             anchors.verticalCenterOffset: (1 - emptyTrashDialog.progress) * 16
             width: 360
-            height: 168
+            height: 188
             radius: 20
             color: Theme.surfaceContainerHigh
             border.width: 1
@@ -1588,7 +1601,10 @@ ApplicationWindow {
                 }
                 StyledText {
                     Layout.fillWidth: true
-                    text: "Se eliminarán definitivamente todos los elementos. Esta acción no se puede deshacer."
+                    text: Browser.trashStatsBusy && Browser.trashSize === 0
+                          ? "Se eliminarán definitivamente todos los elementos. Esta acción no se puede deshacer."
+                          : "Se eliminarán definitivamente " + (Browser.trashCount === 1 ? "1 elemento" : Browser.trashCount + " elementos")
+                            + " (" + Browser.formatSize(Browser.trashSize) + "). Esta acción no se puede deshacer."
                     color: Theme.onSurfaceVariant
                     font.pixelSize: 13
                     wrapMode: Text.Wrap

@@ -2,6 +2,7 @@
 #include "BrowserController.h"
 #include "FileManager1.h"
 #include "PickController.h"
+#include "SoundPlayer.h"
 #include "OpenWithController.h"
 #include "PropertiesController.h"
 #include "Theme.h"
@@ -151,6 +152,7 @@ int main(int argc, char *argv[]) {
     Theme theme;
     BrowserController browser;
     ArchiveController archive;
+    SoundPlayer sounds;
     browser.setTheme(&theme);
     PropertiesController properties;
     OpenWithController openWith;
@@ -202,6 +204,21 @@ int main(int argc, char *argv[]) {
         return 1;
 
     QObject::connect(&pick, &PickController::finished, &app, &QGuiApplication::quit);
+    // System sounds (on by default, switchable from the ⋮ menu).
+    sounds.setEnabled(browser.soundsEnabled());
+    QObject::connect(&browser, &BrowserController::soundsEnabledChanged, &sounds,
+                     [&browser, &sounds] { sounds.setEnabled(browser.soundsEnabled()); });
+    QObject::connect(&archive, &ArchiveController::finished, &sounds,
+                     [&sounds](bool ok, const QString &message, const QString &) {
+                         if (ok)
+                             sounds.play(QStringLiteral("complete"));
+                         else if (message != QLatin1String("Cancelado"))
+                             sounds.play(QStringLiteral("dialog-error"));
+                     });
+    QObject::connect(&browser, &BrowserController::trashEmptied, &sounds,
+                     [&sounds] { sounds.play(QStringLiteral("trash-empty")); });
+    QObject::connect(&browser, &BrowserController::errorOccurred, &sounds,
+                     [&sounds](const QString &) { sounds.play(QStringLiteral("dialog-error")); });
     QObject::connect(&archive, &ArchiveController::finished, &browser,
                      [&browser](bool ok, const QString &, const QString &path) {
                          if (ok && !path.isEmpty()) {

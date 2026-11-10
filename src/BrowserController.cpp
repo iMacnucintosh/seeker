@@ -4,6 +4,9 @@
 #include "Thumbnailers.h"
 
 #include <QDesktopServices>
+#include <QDirIterator>
+#include <QFutureWatcher>
+#include <QtConcurrent>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
@@ -11,6 +14,7 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QLocale>
 #include <QMimeDatabase>
 #include <QProcess>
 #include <QSet>
@@ -68,6 +72,11 @@ BrowserController::BrowserController(QObject *parent)
     loadSettings();
     seedDefaultPinsIfNeeded();
     loadFolderIcons();
+    // Trash size/count for the Papelera banner: refresh whenever we land in (or change) the trash.
+    connect(this, &BrowserController::pathChanged, this, [this] {
+        if (inTrash())
+            updateTrashStats();
+    });
     navigate(QDir::homePath());
 }
 
@@ -324,6 +333,14 @@ void BrowserController::setViewMode(const QString &mode) {
     saveSettings();
 }
 
+void BrowserController::setSoundsEnabled(bool on) {
+    if (m_soundsEnabled == on)
+        return;
+    m_soundsEnabled = on;
+    emit soundsEnabledChanged();
+    saveSettings();
+}
+
 void BrowserController::setShowImagePreviews(bool show) {
     if (m_showImagePreviews == show)
         return;
@@ -567,7 +584,8 @@ QString BrowserController::formatSize(qint64 bytes) const {
         ++u;
     }
     const int decimals = (v >= 10.0 || u == 0) ? 0 : 1;
-    return QString::number(v, 'f', decimals) + QLatin1Char(' ') + QLatin1String(units[u]);
+    // Locale-aware decimal separator: "3,3 MB" in Spanish.
+    return QLocale().toString(v, 'f', decimals) + QLatin1Char(' ') + QLatin1String(units[u]);
 }
 
 QString BrowserController::ensureLocal(const QString &pathOrUri) const {
@@ -740,6 +758,46 @@ void BrowserController::goForward() {
 void BrowserController::refresh() {
     clearFolderPreviewCache();
     m_model->refresh();
+    if (inTrash())
+        updateTrashStats();
+}
+
+void BrowserController::updateTrashStats() {
+    const QString dir = m_trash.trashPath();
+    // The item count is cheap: publish it right away.
+    const int count = QDir(dir).entryList(QDir::AllEntries | QDir::NoDotAndDotDot | QDir::Hidden | QDir::System).size();
+    if (count != m_trashCount) {
+        m_trashCount = count;
+        emit trashStatsChanged();
+    }
+    if (m_trashBusy) { // a scan is running: do one more when it ends so the number is not stale
+        m_trashDirty = true;
+        return;
+    }
+    m_trashBusy = true;
+    m_trashDirty = false;
+    emit trashStatsChanged();
+
+    auto *watcher = new QFutureWatcher<qint64>(this);
+    connect(watcher, &QFutureWatcher<qint64>::finished, this, [this, watcher] {
+        m_trashSize = watcher->result();
+        watcher->deleteLater();
+        m_trashBusy = false;
+        emit trashStatsChanged();
+        if (m_trashDirty)
+            updateTrashStats();
+    });
+    // Apparent size of every regular file; symlinks are not followed (their targets are not in the trash).
+    watcher->setFuture(QtConcurrent::run([dir]() -> qint64 {
+        qint64 total = 0;
+        QDirIterator it(dir, QDir::Files | QDir::Hidden | QDir::System | QDir::NoSymLinks | QDir::NoDotAndDotDot,
+                        QDirIterator::Subdirectories);
+        while (it.hasNext()) {
+            it.next();
+            total += it.fileInfo().size();
+        }
+        return total;
+    }));
 }
 
 void BrowserController::copySelection() {
@@ -999,7 +1057,9 @@ void BrowserController::trashSelection() {
 }
 
 void BrowserController::emptyTrash() {
-    if (!m_trash.emptyTrash())
+    if (m_trash.emptyTrash())
+        emit trashEmptied();
+    else
         emit errorOccurred(tr("No se pudo vaciar la papelera"));
     clearSelection();
     // Drop undo entries that pointed at trash contents — they're gone.
@@ -1198,12 +1258,33 @@ void BrowserController::clearSelection() {
     setSelectedPaths({});
 }
 
-QString BrowserController::iconUrl(const QString &iconName) const {
+namespace {
+
+/// First icon the theme actually has: the exact name, then the XDG-style shorter names
+/// ("a-b-c" → "a-b" → "a"), then generic file icons. Empty when the theme has none of them.
+QString resolveThemeIcon(const QString &name) {
+    if (name.isEmpty())
+        return {};
+    QStringList tries{name};
+    QString n = name;
+    while (n.contains(QLatin1Char('-'))) {
+        n = n.left(n.lastIndexOf(QLatin1Char('-')));
+        tries << n;
+    }
+    tries << QStringLiteral("application-x-generic") << QStringLiteral("text-x-generic")
+          << QStringLiteral("unknown");
+    for (const QString &t : std::as_const(tries))
+        if (!t.isEmpty() && !QIcon::fromTheme(t).isNull())
+            return t;
+    return {};
+}
+
+} // namespace
+
+QString BrowserController::iconUrl(const QString &requestedName) const {
+    const QString iconName = resolveThemeIcon(requestedName);
     if (iconName.isEmpty())
-        return {};
-    const QIcon icon = QIcon::fromTheme(iconName);
-    if (icon.isNull())
-        return {};
+        return {}; // QML draws a generic file glyph instead
     QString url = QStringLiteral("image://theme/%1").arg(iconName);
     // Bust image cache + drive folder accent when the Material You primary changes.
     const bool folderIcon = iconName == QLatin1String("folder")
@@ -1270,6 +1351,8 @@ void BrowserController::loadSettings() {
         m_showRefreshButton = obj.value(QStringLiteral("showRefreshButton")).toBool();
     if (obj.contains(QStringLiteral("showNewFolderButton")))
         m_showNewFolderButton = obj.value(QStringLiteral("showNewFolderButton")).toBool();
+    if (obj.contains(QStringLiteral("soundsEnabled")))
+        m_soundsEnabled = obj.value(QStringLiteral("soundsEnabled")).toBool();
     if (obj.contains(QStringLiteral("iconSizeStep")))
         m_iconSizeStep = qBound(obj.value(QStringLiteral("iconSizeStep")).toInt(2), 0, 4);
     m_pinnedPlaces.clear();
@@ -1303,6 +1386,7 @@ void BrowserController::saveSettings() const {
     obj.insert(QStringLiteral("showUpButton"), m_showUpButton);
     obj.insert(QStringLiteral("showRefreshButton"), m_showRefreshButton);
     obj.insert(QStringLiteral("showNewFolderButton"), m_showNewFolderButton);
+    obj.insert(QStringLiteral("soundsEnabled"), m_soundsEnabled);
     obj.insert(QStringLiteral("iconSizeStep"), m_iconSizeStep);
     QJsonArray pinned;
     for (const QString &p : m_pinnedPlaces)

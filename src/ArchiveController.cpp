@@ -2,6 +2,7 @@
 
 #include <algorithm>
 
+#include <QDateTime>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
@@ -159,18 +160,24 @@ void ArchiveController::compress(const QStringList &paths) {
         names << fi.fileName();
     }
 
+    // Like macOS: one item → "<name>.zip", several → "Archivo.zip".
     QString base;
     if (names.size() == 1) {
         base = first.isDir() || first.suffix().isEmpty() ? first.fileName() : first.completeBaseName();
         if (base.isEmpty())
             base = first.fileName();
     } else {
-        base = QFileInfo(parent).fileName();
-        if (base.isEmpty())
-            base = tr("Archivo");
+        base = tr("Archivo");
     }
 
-    m_archive = QDir(parent).filePath(uniqueName(parent, base, QStringLiteral("zip")));
+    // A taken name gets the date and time (so repeated runs are distinguishable and never
+    // overwrite each other); the " (2)" suffix is only the last resort within the same second.
+    QString zipName = base + QStringLiteral(".zip");
+    if (QFile::exists(QDir(parent).filePath(zipName))) {
+        const QString stamp = QDateTime::currentDateTime().toString(QStringLiteral("yyyy-MM-dd HH.mm.ss"));
+        zipName = uniqueName(parent, base + QLatin1Char(' ') + stamp, QStringLiteral("zip"));
+    }
+    m_archive = QDir(parent).filePath(zipName);
     m_partPath = m_archive + QStringLiteral(".part");
     QFile::remove(m_partPath); // stale leftover of an interrupted run
     m_resultPath = m_archive;

@@ -31,6 +31,8 @@ class BrowserController : public QObject {
     Q_PROPERTY(bool showUpButton READ showUpButton WRITE setShowUpButton NOTIFY showUpButtonChanged)
     Q_PROPERTY(bool showRefreshButton READ showRefreshButton WRITE setShowRefreshButton NOTIFY showRefreshButtonChanged)
     Q_PROPERTY(bool showNewFolderButton READ showNewFolderButton WRITE setShowNewFolderButton NOTIFY showNewFolderButtonChanged)
+    /// System sounds for archive done / errors / trash emptied (on by default).
+    Q_PROPERTY(bool soundsEnabled READ soundsEnabled WRITE setSoundsEnabled NOTIFY soundsEnabledChanged)
     /// Grid/list icon size step: 0…4 → 48/56/64/72/80 px (default 2 = 64).
     Q_PROPERTY(int iconSizeStep READ iconSizeStep WRITE setIconSizeStep NOTIFY iconSizeStepChanged)
     Q_PROPERTY(int iconSize READ iconSize NOTIFY iconSizeStepChanged)
@@ -39,6 +41,10 @@ class BrowserController : public QObject {
     Q_PROPERTY(bool canUndo READ canUndo NOTIFY undoChanged)
     Q_PROPERTY(bool inTrash READ inTrash NOTIFY pathChanged)
     Q_PROPERTY(bool trashIsEmpty READ trashIsEmpty NOTIFY pathChanged)
+    /// Trash contents: top-level item count (instant) and total size in bytes (computed off-thread).
+    Q_PROPERTY(int trashCount READ trashCount NOTIFY trashStatsChanged)
+    Q_PROPERTY(qint64 trashSize READ trashSize NOTIFY trashStatsChanged)
+    Q_PROPERTY(bool trashStatsBusy READ trashStatsBusy NOTIFY trashStatsChanged)
     /// Bumps when custom folder icon map changes (bind in QML to refresh badges).
     Q_PROPERTY(int folderIconsRevision READ folderIconsRevision NOTIFY folderIconsChanged)
 
@@ -70,6 +76,8 @@ public:
     bool showRefreshButton() const { return m_showRefreshButton; }
     void setShowRefreshButton(bool show);
     bool showNewFolderButton() const { return m_showNewFolderButton; }
+    bool soundsEnabled() const { return m_soundsEnabled; }
+    void setSoundsEnabled(bool on);
     void setShowNewFolderButton(bool show);
     int iconSizeStep() const { return m_iconSizeStep; }
     void setIconSizeStep(int step);
@@ -79,6 +87,9 @@ public:
     bool canUndo() const { return !m_undo.isEmpty(); }
     bool inTrash() const;
     bool trashIsEmpty() const;
+    int trashCount() const { return m_trashCount; }
+    qint64 trashSize() const { return m_trashSize; }
+    bool trashStatsBusy() const { return m_trashBusy; }
     int folderIconsRevision() const { return m_folderIconsRevision; }
 
     Q_INVOKABLE void navigate(const QString &path);
@@ -158,14 +169,18 @@ signals:
     void showUpButtonChanged();
     void showRefreshButtonChanged();
     void showNewFolderButtonChanged();
+    void soundsEnabledChanged();
+    void trashEmptied();
     void iconSizeStepChanged();
     void undoChanged();
     void errorOccurred(const QString &message);
+    void trashStatsChanged();
     void folderCreated(const QString &path);
     void folderIconsChanged();
     void placesChanged();
 
 private:
+    void updateTrashStats();
     void loadFolderIcons();
     void saveFolderIcons() const;
     void loadSettings();
@@ -227,6 +242,7 @@ private:
     bool m_showUpButton = false;
     bool m_showRefreshButton = false;
     bool m_showNewFolderButton = true;
+    bool m_soundsEnabled = true;
     int m_iconSizeStep = 2; // 64 px
     mutable int m_folderPreviewsRevision = 0;
     struct FolderPreviewCacheEntry {
@@ -235,6 +251,10 @@ private:
     };
     mutable QHash<QString, FolderPreviewCacheEntry> m_folderPreviewCache;
     QVector<UndoOp> m_undo;
+    int m_trashCount = 0;
+    qint64 m_trashSize = 0;
+    bool m_trashBusy = false;
+    bool m_trashDirty = false; // contents changed while a scan was running → scan again
     QHash<QString, QString> m_folderIcons; // cleanPath → Material symbol
     int m_folderIconsRevision = 0;
     QStringList m_pinnedPlaces; // cleanPath, ordered
