@@ -45,6 +45,12 @@ Rectangle {
         }
     }
 
+    // Theme surfaces turn translucent when Sylphrena's transparency is on; the suggestions panel
+    // floats over the file grid, so it must not let the icons behind show through.
+    function opaque(c) {
+        return Qt.rgba(c.r, c.g, c.b, 1)
+    }
+
     function beginEdit() {
         editing = true
         field.text = Browser.currentPath
@@ -248,6 +254,13 @@ Rectangle {
                 mouse.accepted = false
                 return
             }
+            // A press on the address bar itself is not "outside": let it reach the text field so
+            // the caret can be placed and a part of the path selected by dragging.
+            const b = root.mapFromItem(suggestDismiss, mouse.x, mouse.y)
+            if (b.x >= 0 && b.y >= 0 && b.x <= root.width && b.y <= root.height) {
+                mouse.accepted = false
+                return
+            }
             root.cancelEdit()
         }
     }
@@ -276,7 +289,9 @@ Rectangle {
         Rectangle {
             anchors.fill: parent
             radius: 16
-            color: Theme.surfaceContainerHigh
+            color: root.opaque(Theme.surfaceContainerHigh)
+            border.width: 1
+            border.color: Theme.outlineVariant
         }
 
         Column {
@@ -302,8 +317,8 @@ Rectangle {
                     Rectangle {
                         anchors.fill: parent
                         radius: 12
-                        color: row.active ? Theme.secondaryContainer
-                             : (rowMa.containsMouse ? Theme.surfaceContainerHighest : "transparent")
+                        color: row.active ? root.opaque(Theme.secondaryContainer)
+                             : (rowMa.containsMouse ? root.opaque(Theme.surfaceContainerHighest) : "transparent")
                     }
 
                     RowLayout {
