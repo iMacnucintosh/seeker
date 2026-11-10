@@ -16,9 +16,10 @@ Explorador de archivos **Material You** para [Sylphrena](https://github.com/iMac
 - **Selección** — clic, Ctrl+clic, marco; RMB conserva multi-selección
 - **Portapapeles** — copiar / cortar / pegar; papelera freedesktop; deshacer
 - **Arrastre** — mover/copiar entre carpetas; soltar en favoritos para anclar
+- **ZIP** — menú contextual → **Comprimir en ZIP** (uno o varios elementos de la misma carpeta; crea `nombre.zip` al lado) y **Extraer aquí** sobre un `.zip` (también `.tar.gz/.xz/.bz2/.zst`, `.7z`, `.rar`). Corre en segundo plano con aviso de progreso y botón Cancelar; usa `bsdtar` (libarchive). Un zip con una sola carpeta se extrae tal cual junto al archivo; si no, en una carpeta nueva con el nombre del archivo. Nunca sobrescribe (añade « (2)»), no deja archivos a medias si se cancela o falla y rechaza rutas inseguras (`..`).
 - **Previsualizaciones** — thumbs FreeDesktop (imágenes + `.thumbnailer` por MIME, p. ej. Blender); mosaico 2×2 en carpetas (opt-in)
 - **Tamaño de iconos** — slider en ⋮ (5 pasos: 48–80 px; por defecto 64)
-- **Menú contextual** — abrir, propiedades, icono de carpeta, abrir con…
+- **Menú contextual** — abrir, propiedades, icono de carpeta, abrir con…, comprimir/extraer
 - **Chrome** — botones nueva carpeta / subir / actualizar mostrables u ocultables desde ⋮
 - **Tema** — Material You en vivo desde Sylphrena (`theme.json`)
 - **Portal** — FileChooser xdg-desktop-portal + stub `FileManager1`

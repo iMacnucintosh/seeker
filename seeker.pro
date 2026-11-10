@@ -7,6 +7,7 @@ DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000
 
 SOURCES += \
     src/main.cpp \
+    src/ArchiveController.cpp \
     src/BrowserController.cpp \
     src/DirModel.cpp \
     src/Theme.cpp \
@@ -20,6 +21,7 @@ SOURCES += \
     src/OpenWithController.cpp
 
 HEADERS += \
+    src/ArchiveController.h \
     src/BrowserController.h \
     src/DirModel.h \
     src/Theme.h \

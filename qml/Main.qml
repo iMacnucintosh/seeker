@@ -1424,6 +1424,21 @@ ApplicationWindow {
             onClicked: Browser.duplicateSelection()
         }
         ContextMenu.MenuRow {
+            visible: win.contextKind === "item" && Archive.available
+            icon: "folder_zip"
+            label: "Comprimir en ZIP"
+            enabled: Browser.selectionCount > 0 && !Archive.busy
+            onClicked: Archive.compress(Browser.selectedPaths)
+        }
+        ContextMenu.MenuRow {
+            visible: win.contextKind === "item" && Browser.selectionCount === 1
+                     && Browser.selectedPaths.length > 0 && Archive.canExtract(Browser.selectedPaths[0])
+            icon: "unarchive"
+            label: "Extraer aquí"
+            enabled: !Archive.busy
+            onClicked: Archive.extractHere(Browser.selectedPaths[0])
+        }
+        ContextMenu.MenuRow {
             visible: win.contextKind === "item"
             icon: "drive_file_rename_outline"
             label: "Renombrar"
@@ -1489,6 +1504,20 @@ ApplicationWindow {
             dangerous: true
             enabled: Browser.selectionCount > 0
             onClicked: Browser.trashSelection()
+        }
+    }
+
+    TaskToast {
+        id: taskToast
+        busy: Archive.busy
+        busyText: Archive.taskText
+        busyDetail: Archive.detail
+        onCancelRequested: Archive.cancel()
+    }
+    Connections {
+        target: Archive
+        function onFinished(ok, message, resultPath) {
+            taskToast.show(message, !ok && message !== "Cancelado")
         }
     }
 

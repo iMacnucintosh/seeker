@@ -1,3 +1,4 @@
+#include "ArchiveController.h"
 #include "BrowserController.h"
 #include "FileManager1.h"
 #include "PickController.h"
@@ -149,6 +150,7 @@ int main(int argc, char *argv[]) {
 
     Theme theme;
     BrowserController browser;
+    ArchiveController archive;
     browser.setTheme(&theme);
     PropertiesController properties;
     OpenWithController openWith;
@@ -191,6 +193,7 @@ int main(int argc, char *argv[]) {
     engine.addImageProvider(QStringLiteral("thumb"), new ThumbnailProvider());
     engine.rootContext()->setContextProperty(QStringLiteral("Theme"), &theme);
     engine.rootContext()->setContextProperty(QStringLiteral("Browser"), &browser);
+    engine.rootContext()->setContextProperty(QStringLiteral("Archive"), &archive);
     engine.rootContext()->setContextProperty(QStringLiteral("Pick"), &pick);
     engine.rootContext()->setContextProperty(QStringLiteral("Properties"), &properties);
     engine.rootContext()->setContextProperty(QStringLiteral("OpenWith"), &openWith);
@@ -199,6 +202,13 @@ int main(int argc, char *argv[]) {
         return 1;
 
     QObject::connect(&pick, &PickController::finished, &app, &QGuiApplication::quit);
+    QObject::connect(&archive, &ArchiveController::finished, &browser,
+                     [&browser](bool ok, const QString &, const QString &path) {
+                         if (ok && !path.isEmpty()) {
+                             browser.refresh();
+                             browser.setSelectedPaths({path});
+                         }
+                     });
 
     auto *shellKeys = new ShellKeyFilter(&browser, &pick, &app);
     app.installEventFilter(shellKeys);
