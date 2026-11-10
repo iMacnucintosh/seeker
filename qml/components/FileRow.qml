@@ -131,6 +131,16 @@ Item {
                 sourceSize.width: root.iconPx * 2
                 sourceSize.height: root.iconPx * 2
             }
+            // No themed icon at all (not even a generic one): a plain file/folder glyph, never a blank gap.
+            MaterialIcon {
+                anchors.centerIn: parent
+                visible: iconImage.visible && iconImage.source.toString() === ""
+                icon: root.isDir ? "folder" : "draft"
+                size: Math.round(root.iconPx * 0.8)
+                fill: 1
+                colour: root.isDir ? Theme.primaryContainer : Theme.onSurfaceVariant
+                opacity: root.isDir ? 1 : 0.75
+            }
             MaterialIcon {
                 visible: root.placeSymbol.length > 0 && !root.showPreview
                 anchors.horizontalCenter: parent.horizontalCenter

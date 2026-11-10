@@ -151,6 +151,16 @@ Item {
             sourceSize.width: root.iconPx * 2
             sourceSize.height: root.iconPx * 2
         }
+        // No themed icon at all (not even a generic one): a plain file/folder glyph, never a blank gap.
+        MaterialIcon {
+            anchors.centerIn: parent
+            visible: iconImage.visible && iconImage.source.toString() === ""
+            icon: root.isDir ? "folder" : "draft"
+            size: Math.round(root.iconPx * 0.8)
+            fill: 1
+            colour: Theme.onSurfaceVariant
+            opacity: 0.75
+        }
         // Dolphin-style 2×2 image mosaic over the folder icon (no dimming of the face).
         Grid {
             id: folderMosaic
