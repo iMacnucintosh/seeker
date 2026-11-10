@@ -38,7 +38,7 @@ Item {
 
         background: Rectangle {
             radius: 16
-            color: Theme.surfaceContainerHigh
+            color: Theme.popup
             border.width: 1
             border.color: Theme.outlineVariant
         }

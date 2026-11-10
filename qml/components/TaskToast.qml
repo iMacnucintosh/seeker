@@ -45,7 +45,7 @@ Item {
     Rectangle {
         anchors.fill: parent
         radius: height / 2
-        color: Theme.surfaceContainerHighest
+        color: Theme.popupHighest
         border.width: 1
         border.color: root.isError && !root.busy ? Qt.alpha(Theme.error, 0.6) : Theme.outlineVariant
     }

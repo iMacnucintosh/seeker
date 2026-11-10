@@ -13,6 +13,12 @@ class Theme : public QObject {
     Q_PROPERTY(QColor surface READ surface NOTIFY changed)
     Q_PROPERTY(QColor surfaceContainer READ surfaceContainer NOTIFY changed)
     Q_PROPERTY(QColor surfaceContainerHigh READ surfaceContainerHigh NOTIFY changed)
+    /// Floating panels (dialogs, menus, toasts, suggestion lists) must not let the content behind show
+    /// through: these are surfaceContainerHigh/Highest without the transparency alpha.
+    /// The page surface when it sits on top of other translucent layers (the file area): layer 1.
+    Q_PROPERTY(QColor panel READ panel NOTIFY changed)
+    Q_PROPERTY(QColor popup READ popup NOTIFY changed)
+    Q_PROPERTY(QColor popupHighest READ popupHighest NOTIFY changed)
     Q_PROPERTY(QColor surfaceContainerHighest READ surfaceContainerHighest NOTIFY changed)
     Q_PROPERTY(QColor surfaceContainerLow READ surfaceContainerLow NOTIFY changed)
     Q_PROPERTY(QColor surfaceContainerLowest READ surfaceContainerLowest NOTIFY changed)
@@ -46,12 +52,15 @@ public:
     qreal transparencyBase() const { return m_transparencyBase; }
 
     QColor background() const { return withAlpha(color("background", "surface")); }
-    QColor surface() const { return withAlpha(color("surface")); }
-    QColor surfaceContainer() const { return withAlpha(color("surfaceContainer", "surface")); }
-    QColor surfaceContainerHigh() const { return withAlpha(color("surfaceContainerHigh", "surfaceContainer")); }
-    QColor surfaceContainerHighest() const { return withAlpha(color("surfaceContainerHighest", "surfaceContainerHigh")); }
-    QColor surfaceContainerLow() const { return withAlpha(color("surfaceContainerLow", "surface")); }
-    QColor surfaceContainerLowest() const { return withAlpha(color("surfaceContainerLowest", "surface")); }
+    QColor surface() const { return withAlpha(color("surface")); } // layer 0
+    QColor panel() const { return layer(color("surface"), 1); }
+    QColor surfaceContainer() const { return layer(color("surfaceContainer", "surface"), 1); }
+    QColor popup() const { QColor c = color("surfaceContainerHigh", "surfaceContainer"); c.setAlpha(255); return c; }
+    QColor popupHighest() const { QColor c = color("surfaceContainerHighest", "surfaceContainerHigh"); c.setAlpha(255); return c; }
+    QColor surfaceContainerHigh() const { return layer(color("surfaceContainerHigh", "surfaceContainer"), 1); }
+    QColor surfaceContainerHighest() const { return layer(color("surfaceContainerHighest", "surfaceContainerHigh"), 1); }
+    QColor surfaceContainerLow() const { return layer(color("surfaceContainerLow", "surface"), 1); }
+    QColor surfaceContainerLowest() const { return layer(color("surfaceContainerLowest", "surface"), 1); }
     QColor onSurface() const { return color("onSurface"); }
     QColor onSurfaceVariant() const { return color("onSurfaceVariant", "onSurface"); }
     QColor outline() const { return color("outline"); }
@@ -73,6 +82,9 @@ signals:
 private:
     QColor color(const QString &key, const QString &fallback = {}) const;
     QColor withAlpha(const QColor &c) const;
+    /// Same rule as the shell's Colours.layer(): layer 0 = the surface with alpha `base`; layer >= 1 =
+    /// a luminance-shifted tone with alpha `layers`, so stacked layers do not add up to opaque.
+    QColor layer(const QColor &c, int layer) const;
     void loadFrom(const QString &path);
     void applyDefaults();
 
@@ -82,6 +94,8 @@ private:
     QString m_iconFamily;
     bool m_transparencyEnabled = false;
     qreal m_transparencyBase = 0.85;
+    qreal m_transparencyLayers = 0.4; // alpha of layer >= 1 (shell: appearance.transparency.layers)
+    qreal m_wallLuminance = 0.5;      // luminance of the wallpaper, drives the layer tone shift
     QFileSystemWatcher m_watcher;
 
     static QString pickFamily(const QStringList &candidates);

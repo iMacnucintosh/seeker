@@ -70,7 +70,7 @@ Item {
         width: Math.min(440, parent.width - 48)
         height: Math.min(520, parent.height - 48)
         radius: 20
-        color: Theme.surfaceContainerHigh
+        color: Theme.popup
         border.width: 1
         border.color: Theme.outlineVariant
         opacity: root.progress

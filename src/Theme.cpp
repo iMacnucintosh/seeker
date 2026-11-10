@@ -1,5 +1,7 @@
 #include "Theme.h"
 
+#include <cmath>
+
 #include <QDir>
 #include <QFile>
 #include <QFont>
@@ -91,10 +93,30 @@ QColor Theme::withAlpha(const QColor &c) const {
     return out;
 }
 
+QColor Theme::layer(const QColor &c, int layer) const {
+    if (!m_transparencyEnabled)
+        return c;
+    if (layer <= 0)
+        return withAlpha(c);
+
+    // Port of Colours.alterColour() from the shell.
+    const bool light = m_mode == QLatin1String("light");
+    const qreal r = c.redF(), g = c.greenF(), b = c.blueF();
+    const qreal lum = (r == 0 && g == 0 && b == 0) ? 0.0 : std::sqrt(0.299 * r * r + 0.587 * g * g + 0.114 * b * b);
+    const qreal factor = (!light || layer == 1) ? 1.0 : -layer / 2.0;
+    const qreal offset = factor * (light ? 0.2 : 0.3) * (1.0 - m_transparencyBase)
+                         * (1.0 + m_wallLuminance * (light ? (layer == 1 ? 3.0 : 1.0) : 2.5));
+    const qreal scale = lum > 0 ? (lum + offset) / lum : 1.0;
+    auto clamp = [](qreal v) { return qBound(0.0, v, 1.0); };
+    return QColor::fromRgbF(clamp(r * scale), clamp(g * scale), clamp(b * scale), qBound(0.0, m_transparencyLayers, 1.0));
+}
+
 void Theme::applyDefaults() {
     m_mode = QStringLiteral("dark");
     m_transparencyEnabled = false;
     m_transparencyBase = 0.85;
+    m_transparencyLayers = 0.4;
+    m_wallLuminance = 0.5;
     // Sylphrena tokens say "GoogleSansFlex"; the TTF registers "Google Sans Flex".
     m_uiFamily = pickFamily({
         QStringLiteral("Google Sans Flex"),
@@ -148,6 +170,10 @@ void Theme::loadFrom(const QString &path) {
             m_transparencyEnabled = tr.value(QStringLiteral("enabled")).toBool(false);
         if (tr.contains(QStringLiteral("base")))
             m_transparencyBase = tr.value(QStringLiteral("base")).toDouble(0.85);
+        if (tr.contains(QStringLiteral("layers")))
+            m_transparencyLayers = tr.value(QStringLiteral("layers")).toDouble(0.4);
+        if (tr.contains(QStringLiteral("wallLuminance")))
+            m_wallLuminance = qBound(0.0, tr.value(QStringLiteral("wallLuminance")).toDouble(0.5), 1.0);
     }
 
     QJsonObject colours = root.value(QStringLiteral("colours")).toObject();

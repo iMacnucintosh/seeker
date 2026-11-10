@@ -107,7 +107,7 @@ Item {
     // --- Visual bloom (toolbar-local) ---
     BlobGroup {
         id: blobGroup
-        color: Theme.surfaceContainerHigh
+        color: Theme.popup
         smoothing: root.corner
         cornerFill: false
     }
@@ -116,7 +116,7 @@ Item {
         id: crispBtn
         anchors.fill: parent
         radius: root.corner
-        color: Theme.surfaceContainerHigh
+        color: Theme.popup
         opacity: root.open || root.animDriver > 0 ? 0 : 1
         z: 0
         Behavior on opacity { NumberAnimation { duration: 120 } }

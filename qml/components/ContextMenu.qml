@@ -204,7 +204,7 @@ Item {
 
         BlobGroup {
             id: blobGroup
-            color: Theme.surfaceContainerHigh
+            color: Theme.popup
             smoothing: menuRoot.corner
             cornerFill: false
         }

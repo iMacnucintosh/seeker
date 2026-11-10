@@ -45,12 +45,6 @@ Rectangle {
         }
     }
 
-    // Theme surfaces turn translucent when Sylphrena's transparency is on; the suggestions panel
-    // floats over the file grid, so it must not let the icons behind show through.
-    function opaque(c) {
-        return Qt.rgba(c.r, c.g, c.b, 1)
-    }
-
     function beginEdit() {
         editing = true
         field.text = Browser.currentPath
@@ -248,6 +242,16 @@ Rectangle {
         enabled: root.suggestOpen
         visible: root.suggestOpen
         z: 88
+        // This layer sits above the address field, so its cursor is the one that shows over it.
+        // Over the text field that must be the text (I-beam) cursor, not the plain arrow.
+        hoverEnabled: true
+        property bool overField: false
+        cursorShape: overField ? Qt.IBeamCursor : Qt.ArrowCursor
+        onPositionChanged: (mouse) => {
+            const f = field.mapFromItem(suggestDismiss, mouse.x, mouse.y)
+            overField = f.x >= 0 && f.y >= 0 && f.x <= field.width && f.y <= field.height
+        }
+        onExited: overField = false
         onPressed: (mouse) => {
             const p = suggestHost.mapFromItem(suggestDismiss, mouse.x, mouse.y)
             if (p.x >= 0 && p.y >= 0 && p.x <= suggestHost.width && p.y <= suggestHost.height) {
@@ -289,7 +293,7 @@ Rectangle {
         Rectangle {
             anchors.fill: parent
             radius: 16
-            color: root.opaque(Theme.surfaceContainerHigh)
+            color: Theme.popup
             border.width: 1
             border.color: Theme.outlineVariant
         }
@@ -317,8 +321,8 @@ Rectangle {
                     Rectangle {
                         anchors.fill: parent
                         radius: 12
-                        color: row.active ? root.opaque(Theme.secondaryContainer)
-                             : (rowMa.containsMouse ? root.opaque(Theme.surfaceContainerHighest) : "transparent")
+                        color: row.active ? Theme.secondaryContainer
+                             : (rowMa.containsMouse ? Theme.popupHighest : "transparent")
                     }
 
                     RowLayout {

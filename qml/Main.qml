@@ -484,9 +484,11 @@ ApplicationWindow {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
 
+                // Frame around the card. When translucent the window itself is the frame: one more layer here
+                // would stack up to an almost opaque window.
                 Rectangle {
                     anchors.fill: parent
-                    color: Theme.surfaceContainerLow
+                    color: Theme.transparencyEnabled ? "transparent" : Theme.surfaceContainerLow
                 }
 
                 Rectangle {
@@ -495,7 +497,7 @@ ApplicationWindow {
                     anchors.margins: 12
                     anchors.leftMargin: 8
                     radius: 10 // match Hyprland decoration.rounding
-                    color: Theme.surface
+                    color: Theme.panel
                     clip: true
                     focus: true
                     activeFocusOnTab: true
@@ -1580,7 +1582,7 @@ ApplicationWindow {
             width: 360
             height: 188
             radius: 20
-            color: Theme.surfaceContainerHigh
+            color: Theme.popup
             border.width: 1
             border.color: Theme.outlineVariant
             opacity: emptyTrashDialog.progress
@@ -1681,7 +1683,7 @@ ApplicationWindow {
             width: 360
             height: 160
             radius: 20
-            color: Theme.surfaceContainerHigh
+            color: Theme.popup
             border.width: 1
             border.color: Theme.outlineVariant
             opacity: nameDialog.progress

@@ -55,7 +55,7 @@ Item {
         implicitHeight: body.implicitHeight + 40
         height: implicitHeight
         radius: 20
-        color: Theme.surfaceContainerHigh
+        color: Theme.popup
         border.width: 1
         border.color: Theme.outlineVariant
         opacity: root.progress
