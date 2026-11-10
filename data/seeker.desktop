@@ -3,8 +3,8 @@ Name=Archivos
 Name[en]=Files
 GenericName=File Manager
 GenericName[es]=Gestor de archivos
-Comment=Seeker — Material You file manager for Sylphrena
-Comment[es]=Seeker — explorador Material You para Sylphrena
+Comment=Explorador de archivos
+Comment[es]=Explorador de archivos
 # Absolute via $HOME: Cursor/Electron and D-Bus often lack ~/.local/bin in PATH
 # (fallback would hit kitty-open.desktop for inode/directory).
 Exec=/bin/sh -c 'exec "$HOME/.local/bin/seeker" "$@"' sh %U
