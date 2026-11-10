@@ -209,9 +209,10 @@ int main(int argc, char *argv[]) {
     QObject::connect(&browser, &BrowserController::soundsEnabledChanged, &sounds,
                      [&browser, &sounds] { sounds.setEnabled(browser.soundsEnabled()); });
     QObject::connect(&archive, &ArchiveController::finished, &sounds,
-                     [&sounds](bool ok, const QString &message, const QString &) {
-                         if (ok)
-                             sounds.play(QStringLiteral("complete"));
+                     [&sounds, &archive](bool ok, const QString &message, const QString &) {
+                         if (ok) // a different cue for each: packing "closes" (falling), unpacking "opens" (rising)
+                             sounds.play(archive.kind() == QLatin1String("extract") ? QStringLiteral("device-added")
+                                                                                    : QStringLiteral("device-removed"));
                          else if (message != QLatin1String("Cancelado"))
                              sounds.play(QStringLiteral("dialog-error"));
                      });

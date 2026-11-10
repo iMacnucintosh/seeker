@@ -1526,8 +1526,15 @@ ApplicationWindow {
         id: taskToast
         busy: Archive.busy
         busyText: Archive.taskText
-        busyDetail: Archive.detail
+        busyDetail: Archive.progress >= 0
+                    ? Math.round(Archive.progress * 100) + " %" + (Archive.detail.length ? " · " + Archive.detail : "")
+                    : Archive.detail
         onCancelRequested: Archive.cancel()
+    }
+    // Bottom-edge bar for big jobs (shown only if the job lasts a moment)
+    ProgressStrip {
+        busy: Archive.busy
+        progress: Archive.progress
     }
     Connections {
         target: Archive

@@ -3,6 +3,7 @@
 #include <QObject>
 #include <QProcess>
 #include <QStringList>
+#include <QTimer>
 
 /// Compress to ZIP / extract archives, in the background, with libarchive's `bsdtar`.
 ///
@@ -21,6 +22,10 @@ class ArchiveController : public QObject {
     /// Entry bsdtar is working on right now (for the progress toast).
     Q_PROPERTY(QString detail READ detail NOTIFY detailChanged)
     Q_PROPERTY(bool available READ available CONSTANT)
+    /// 0..1 while the size of the job is known (bytes bsdtar has read / total); -1 = unknown yet.
+    Q_PROPERTY(qreal progress READ progress NOTIFY progressChanged)
+    /// "compress" | "extract" — of the current or the last job (picks the sound).
+    Q_PROPERTY(QString kind READ kind NOTIFY busyChanged)
 
 public:
     explicit ArchiveController(QObject *parent = nullptr);
@@ -29,6 +34,8 @@ public:
     QString taskText() const { return m_taskText; }
     QString detail() const { return m_detail; }
     bool available() const { return !m_bsdtar.isEmpty(); }
+    qreal progress() const { return m_progress; }
+    QString kind() const { return m_kind; }
 
     /// By file name only: zip, tar(.gz/.xz/.bz2/.zst), 7z, rar, cbz…
     Q_INVOKABLE bool canExtract(const QString &path) const;
@@ -39,6 +46,7 @@ public:
 signals:
     void busyChanged();
     void detailChanged();
+    void progressChanged();
     /// ok=false: `message` says what went wrong. ok=true: `resultPath` is the new archive/file/folder.
     void finished(bool ok, const QString &message, const QString &resultPath);
 
@@ -52,6 +60,10 @@ private:
     void done(const QString &message, const QString &resultPath);
     void startExtraction(const QString &destDir, const QString &resultPath, bool createdDir, bool stripTop = false);
     void readProgress();
+    void pollIo();
+    void setProgress(qreal p);
+    void startPolling(qint64 total);
+    void stopPolling();
     void onFinished(int code, QProcess::ExitStatus status);
     QString lastErrorLine() const;
 
@@ -68,6 +80,11 @@ private:
     QString m_destDir;      // extract: where bsdtar runs
     QString m_resultPath;   // what the user gets selected afterwards
     bool m_createdDir = false;
+    QString m_kind;
+    qreal m_progress = -1;
+    qint64 m_totalBytes = 0;   // compress: sum of the inputs; extract: size of the archive
+    int m_ioGen = 0;           // invalidates an input-size scan that finishes after the job ended
+    QTimer m_ioTimer;
     bool m_stripTop = false; // extract a lone top-level folder's contents straight into the new folder
     QString m_stderr;
     QByteArray m_listing;

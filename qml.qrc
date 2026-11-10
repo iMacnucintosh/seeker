@@ -19,6 +19,7 @@
         <file>qml/components/IconPicker.qml</file>
         <file>qml/components/PropertiesDialog.qml</file>
         <file>qml/components/TaskToast.qml</file>
+        <file>qml/components/ProgressStrip.qml</file>
         <file>qml/components/OpenWithDialog.qml</file>
         <file>data/seeker.svg</file>
         <file>data/material-symbols.txt</file>

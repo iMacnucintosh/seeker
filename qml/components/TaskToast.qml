@@ -27,7 +27,7 @@ Item {
 
     anchors.horizontalCenter: parent.horizontalCenter
     anchors.bottom: parent.bottom
-    anchors.bottomMargin: 22
+    anchors.bottomMargin: 26
     width: Math.min(parent.width - 48, 520)
     height: 56
     z: 120

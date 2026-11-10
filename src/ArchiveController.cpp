@@ -4,6 +4,9 @@
 
 #include <QDateTime>
 #include <QDir>
+#include <QDirIterator>
+#include <QFutureWatcher>
+#include <QtConcurrent>
 #include <QFile>
 #include <QFileInfo>
 #include <QSet>
@@ -26,7 +29,52 @@ const QStringList &extractableSuffixes() {
 } // namespace
 
 ArchiveController::ArchiveController(QObject *parent)
-    : QObject(parent), m_bsdtar(QStandardPaths::findExecutable(QStringLiteral("bsdtar"))) {}
+    : QObject(parent), m_bsdtar(QStandardPaths::findExecutable(QStringLiteral("bsdtar"))) {
+    m_ioTimer.setInterval(150);
+    connect(&m_ioTimer, &QTimer::timeout, this, &ArchiveController::pollIo);
+}
+
+void ArchiveController::setProgress(qreal p) {
+    // Report in 0.5% steps (and always the -1 / 1 ends): plenty for a bar, cheap for QML.
+    const qreal q = p < 0 ? -1 : qRound(qBound(0.0, p, 1.0) * 200) / 200.0;
+    if (q == m_progress)
+        return;
+    m_progress = q;
+    emit progressChanged();
+}
+
+/// Bytes the bsdtar process has read so far (Linux: /proc/<pid>/io "rchar").
+static qint64 readBytes(qint64 pid) {
+    QFile f(QStringLiteral("/proc/%1/io").arg(pid));
+    if (!f.open(QIODevice::ReadOnly))
+        return -1;
+    for (const QByteArray &line : f.readAll().split('\n'))
+        if (line.startsWith("rchar:"))
+            return line.mid(6).trimmed().toLongLong();
+    return -1;
+}
+
+void ArchiveController::pollIo() {
+    if (!m_proc || m_totalBytes <= 0)
+        return;
+    const qint64 rd = readBytes(m_proc->processId());
+    if (rd >= 0)
+        setProgress(qMin(0.99, double(rd) / double(m_totalBytes))); // 100% only when it has finished
+}
+
+void ArchiveController::startPolling(qint64 total) {
+    m_totalBytes = total;
+    setProgress(total > 0 ? 0 : -1);
+    if (total > 0)
+        m_ioTimer.start();
+}
+
+void ArchiveController::stopPolling() {
+    m_ioTimer.stop();
+    ++m_ioGen;
+    m_totalBytes = 0;
+    setProgress(-1);
+}
 
 bool ArchiveController::canExtract(const QString &path) const {
     if (!available())
@@ -85,6 +133,7 @@ void ArchiveController::fail(const QString &message) {
         else
             QFile::remove(m_resultPath);
     }
+    stopPolling();
     m_stage = Stage::Idle;
     m_createdDir = false;
     m_partPath.clear();
@@ -97,6 +146,7 @@ void ArchiveController::fail(const QString &message) {
 }
 
 void ArchiveController::done(const QString &message, const QString &resultPath) {
+    stopPolling();
     m_stage = Stage::Idle;
     m_createdDir = false;
     m_partPath.clear();
@@ -183,6 +233,7 @@ void ArchiveController::compress(const QStringList &paths) {
     m_resultPath = m_archive;
     m_createdDir = false;
 
+    m_kind = QStringLiteral("compress");
     begin(Stage::Compressing, names.size() == 1 ? tr("Comprimiendo «%1»…").arg(names.first())
                                                 : tr("Comprimiendo %1 elementos…").arg(names.size()));
     m_proc = new QProcess(this);
@@ -197,6 +248,39 @@ void ArchiveController::compress(const QStringList &paths) {
                         QStringLiteral("-C"), parent, QStringLiteral("--")};
     args += names;
     m_proc->start(m_bsdtar, args);
+
+    // Total size of what is being packed (off-thread: a big tree can take a moment to walk).
+    // Until it is known the bar stays indeterminate.
+    m_kind = QStringLiteral("compress");
+    setProgress(-1);
+    const int gen = ++m_ioGen;
+    const QStringList inputs = [&] { QStringList l; for (const QString &n : names) l << QDir(parent).filePath(n); return l; }();
+    auto *watcher = new QFutureWatcher<qint64>(this);
+    connect(watcher, &QFutureWatcher<qint64>::finished, this, [this, watcher, gen] {
+        const qint64 total = watcher->result();
+        watcher->deleteLater();
+        if (gen == m_ioGen && m_stage == Stage::Compressing)
+            startPolling(total);
+    });
+    watcher->setFuture(QtConcurrent::run([inputs]() -> qint64 {
+        qint64 total = 0;
+        for (const QString &p : inputs) {
+            const QFileInfo fi(p);
+            if (fi.isSymLink())
+                continue; // stored as a link, nothing is read
+            if (fi.isFile()) {
+                total += fi.size();
+            } else if (fi.isDir()) {
+                QDirIterator it(p, QDir::Files | QDir::Hidden | QDir::System | QDir::NoSymLinks | QDir::NoDotAndDotDot,
+                                QDirIterator::Subdirectories);
+                while (it.hasNext()) {
+                    it.next();
+                    total += it.fileInfo().size();
+                }
+            }
+        }
+        return total;
+    }));
 }
 
 void ArchiveController::extractHere(const QString &archivePath) {
@@ -214,6 +298,7 @@ void ArchiveController::extractHere(const QString &archivePath) {
     m_createdDir = false;
     m_listing.clear();
 
+    m_kind = QStringLiteral("extract");
     begin(Stage::Listing, tr("Leyendo «%1»…").arg(fi.fileName()));
     m_proc = new QProcess(this);
     m_proc->setStandardInputFile(QProcess::nullDevice());
@@ -254,6 +339,7 @@ void ArchiveController::startExtraction(const QString &destDir, const QString &r
         if (e == QProcess::FailedToStart)
             fail(tr("No se pudo iniciar bsdtar"));
     });
+    startPolling(QFileInfo(m_archive).size()); // bytes of the archive read so far / archive size
     // bsdtar already drops absolute paths and "..": nothing can land outside destDir.
     QStringList args = {QStringLiteral("-xvf"), m_archive, QStringLiteral("-C"), destDir};
     if (stripTop)
