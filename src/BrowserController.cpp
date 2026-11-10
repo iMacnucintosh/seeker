@@ -1013,60 +1013,88 @@ void BrowserController::trashSelection() {
         return;
     const QStringList targets = m_selected;
 
+    // Moving to / deleting from the trash can take long (a big folder on another disk is copied
+    // and then removed): do it off the UI thread and finish here when it is done.
+
     // Already in the trash → permanent delete (and drop matching .trashinfo).
     if (inTrash()) {
         // trashPath is .../Trash/files → parent is Trash root
         const QString infoRoot = QDir(QFileInfo(m_trash.trashPath()).absolutePath())
                                      .filePath(QStringLiteral("info"));
-        for (const QString &p : targets) {
-            const QFileInfo fi(p);
-            if (fi.isDir() && !fi.isSymLink())
-                QDir(p).removeRecursively();
-            else
-                QFile::remove(p);
-            QFile::remove(QDir(infoRoot).filePath(fi.fileName() + QStringLiteral(".trashinfo")));
-        }
         clearSelection();
-        refresh();
-        emit pathChanged();
+        auto *w = new QFutureWatcher<void>(this);
+        connect(w, &QFutureWatcher<void>::finished, this, [this, w] {
+            w->deleteLater();
+            refresh();
+            emit pathChanged();
+        });
+        w->setFuture(QtConcurrent::run([targets, infoRoot] {
+            for (const QString &p : targets) {
+                const QFileInfo fi(p);
+                if (fi.isDir() && !fi.isSymLink())
+                    QDir(p).removeRecursively();
+                else
+                    QFile::remove(p);
+                QFile::remove(QDir(infoRoot).filePath(fi.fileName() + QStringLiteral(".trashinfo")));
+            }
+        }));
         return;
     }
 
-    const QVector<TrashEntry> moved = m_trash.moveToTrashEntries(targets);
-    if (moved.isEmpty()) {
-        emit errorOccurred(tr("No se pudo mover a la papelera"));
+    auto *w = new QFutureWatcher<QVector<TrashEntry>>(this);
+    connect(w, &QFutureWatcher<QVector<TrashEntry>>::finished, this, [this, w, targets] {
+        const QVector<TrashEntry> moved = w->result();
+        w->deleteLater();
+        if (moved.isEmpty()) {
+            emit errorOccurred(tr("No se pudo mover a la papelera"));
+            refresh();
+            return;
+        }
+
+        UndoOp op;
+        op.kind = UndoKind::Trash;
+        for (const TrashEntry &e : moved) {
+            op.from << e.originalPath;
+            op.to << e.trashFilePath;
+        }
+        pushUndo(std::move(op));
+
+        QStringList still;
+        for (const QString &p : targets) {
+            if (QFileInfo::exists(p))
+                still << p;
+        }
+        setSelectedPaths(still);
         refresh();
-        return;
-    }
-
-    UndoOp op;
-    op.kind = UndoKind::Trash;
-    for (const TrashEntry &e : moved) {
-        op.from << e.originalPath;
-        op.to << e.trashFilePath;
-    }
-    pushUndo(std::move(op));
-
-    QStringList still;
-    for (const QString &p : targets) {
-        if (QFileInfo::exists(p))
-            still << p;
-    }
-    setSelectedPaths(still);
-    refresh();
+    });
+    // A Trash of its own in the worker: nothing shared with the UI thread
+    w->setFuture(QtConcurrent::run([targets] {
+        Trash trash;
+        return trash.moveToTrashEntries(targets);
+    }));
 }
 
 void BrowserController::emptyTrash() {
-    if (m_trash.emptyTrash())
-        emit trashEmptied();
-    else
-        emit errorOccurred(tr("No se pudo vaciar la papelera"));
     clearSelection();
-    // Drop undo entries that pointed at trash contents — they're gone.
-    m_undo.clear();
-    emit undoChanged();
-    refresh();
-    emit pathChanged(); // refresh trashIsEmpty bindings
+    // Can be a lot of data: off the UI thread
+    auto *w = new QFutureWatcher<bool>(this);
+    connect(w, &QFutureWatcher<bool>::finished, this, [this, w] {
+        const bool ok = w->result();
+        w->deleteLater();
+        if (ok)
+            emit trashEmptied();
+        else
+            emit errorOccurred(tr("No se pudo vaciar la papelera"));
+        // Drop undo entries that pointed at trash contents — they're gone.
+        m_undo.clear();
+        emit undoChanged();
+        refresh();
+        emit pathChanged(); // refresh trashIsEmpty bindings
+    });
+    w->setFuture(QtConcurrent::run([] {
+        Trash trash;
+        return trash.emptyTrash();
+    }));
 }
 
 void BrowserController::renameSelected(const QString &newName) {
