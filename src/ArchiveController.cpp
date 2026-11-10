@@ -210,14 +210,14 @@ void ArchiveController::compress(const QStringList &paths) {
         names << fi.fileName();
     }
 
-    // Like macOS: one item → "<name>.zip", several → "Archivo.zip".
+    // One item → "<name>.zip", several → "Comprimido.zip".
     QString base;
     if (names.size() == 1) {
         base = first.isDir() || first.suffix().isEmpty() ? first.fileName() : first.completeBaseName();
         if (base.isEmpty())
             base = first.fileName();
     } else {
-        base = tr("Archivo");
+        base = tr("Comprimido");
     }
 
     // A taken name gets the date and time (so repeated runs are distinguishable and never

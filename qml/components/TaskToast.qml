@@ -68,8 +68,13 @@ Item {
                 from: 0
                 to: 360
                 duration: 1100
+
+                // Rotated text is drawn unsmoothed (pixelated): never leave the icon stopped at an angle.
+                onRunningChanged: {
+                    if (!running)
+                        stateIcon.rotation = 0
+                }
             }
-            onIconChanged: if (!root.busy) rotation = 0
         }
 
         ColumnLayout {
