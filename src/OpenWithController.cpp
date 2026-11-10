@@ -50,7 +50,8 @@ void scheduleHyprlandFocus(const QString &wmClass) {
         return;
 
     // Hyprland 0.57: workspace switch needs hl.dispatch(hl.dsp.focus({workspace=id}));
-    // then focus the window. Plain hl.dsp.focus({window=…}) alone stays on the current desktop.
+    // then focus the window. Every hl.dsp.* only builds a dispatcher: it must go through
+    // hl.dispatch(), or it does nothing (focus and bring-to-top were silently skipped).
     const QString script = QStringLiteral(
         "for delay in 0.12 0.28 0.5 0.9 1.4 2.2; do "
         "  sleep \"$delay\"; "
@@ -64,8 +65,8 @@ void scheduleHyprlandFocus(const QString &wmClass) {
         "end; "
         "if not w then error(\"missing\") end; "
         "hl.dispatch(hl.dsp.focus({workspace=w.workspace.id})); "
-        "hl.dsp.focus({window=w}); "
-        "hl.dsp.window.bring_to_top();"
+        "hl.dispatch(hl.dsp.focus({window=w})); "
+        "hl.dispatch(hl.dsp.window.bring_to_top());"
         "' >/dev/null 2>&1; then "
         "    exit 0; "
         "  fi; "

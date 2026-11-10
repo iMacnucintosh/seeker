@@ -62,14 +62,16 @@ void DirModel::reload() {
         if (e.isDir)
             e.mimeIcon = QStringLiteral("folder");
         else {
-            const auto mime = mimeDb.mimeTypeForFile(fi);
+            // Extension first; read the file's content only when the name says nothing. Sniffing
+            // every file (twice, with the thumbnailer check) made big folders slow to open.
             const auto mimeExt = mimeDb.mimeTypeForFile(fi, QMimeDatabase::MatchExtension);
-            e.isImage = mime.name().startsWith(QLatin1String("image/"))
-                        || mimeExt.name().startsWith(QLatin1String("image/"));
-            e.canPreview = e.isImage || Thumbnailers::instance().supportsFile(e.path);
+            const bool extKnown = mimeExt.isValid() && !mimeExt.isDefault();
+            const auto mime = extKnown ? mimeExt : mimeDb.mimeTypeForFile(fi, QMimeDatabase::MatchContent);
+            e.isImage = mime.name().startsWith(QLatin1String("image/"));
+            e.canPreview = e.isImage || Thumbnailers::instance().supports(mime);
             // Prefer extension icon for types content-sniff gets wrong (.blend → zstd).
             QString icon = mimeExt.iconName();
-            if (icon.isEmpty() || mimeExt.name() == QLatin1String("application/octet-stream"))
+            if (icon.isEmpty() || !extKnown)
                 icon = mime.iconName();
             e.mimeIcon = icon.isEmpty() ? QStringLiteral("text-x-generic") : icon;
         }
