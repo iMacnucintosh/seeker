@@ -1,0 +1,23 @@
+pkgbase = seeker-git
+	pkgdesc = Material You file manager for the Sylphrena shell
+	pkgver = r0.0000000
+	pkgrel = 1
+	url = https://github.com/iMacnucintosh/seeker
+	arch = x86_64
+	license = MIT
+	makedepends = git
+	depends = qt6-base
+	depends = qt6-declarative
+	depends = qt6-svg
+	depends = qt6-wayland
+	depends = glib2
+	depends = file
+	depends = zip
+	optdepends = pipewire: sounds of the sound theme
+	optdepends = sound-theme-freedesktop: the sounds themselves
+	optdepends = gvfs: trash and mounts of other devices
+	conflicts = seeker
+	source = git+https://github.com/iMacnucintosh/seeker.git
+	sha256sums = SKIP
+
+pkgname = seeker-git
