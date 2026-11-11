@@ -150,10 +150,13 @@ Item {
             }
         }
 
+        // Opaque like the other popups (Theme.popup): the translucent container let the files behind show through
         Rectangle {
             anchors.fill: parent
             radius: 16
-            color: Theme.surfaceContainerHigh
+            color: Theme.popup
+            border.width: 1
+            border.color: Theme.outlineVariant
         }
 
         Column {
