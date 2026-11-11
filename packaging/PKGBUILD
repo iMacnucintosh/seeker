@@ -1,0 +1,36 @@
+# Maintainer: iMacnucintosh
+# Builds Seeker from the git repository (a -git package: pkgver follows the commits).
+#   cd packaging && makepkg -si
+pkgname=seeker-git
+pkgver=r0.0000000
+pkgrel=1
+pkgdesc="Material You file manager for the Sylphrena shell"
+arch=('x86_64')
+url="https://github.com/iMacnucintosh/seeker"
+license=('MIT')
+depends=('qt6-base' 'qt6-declarative' 'qt6-svg' 'glib2' 'file' 'zip')
+makedepends=('git')
+optdepends=('pipewire: sounds of the sound theme'
+            'sound-theme-freedesktop: the sounds themselves'
+            'gvfs: trash and mounts of other devices')
+provides=('seeker')
+conflicts=('seeker')
+source=("git+${url}.git")
+sha256sums=('SKIP')
+
+pkgver() {
+  cd seeker
+  printf 'r%s.%s' "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
+}
+
+build() {
+  cd seeker
+  qmake6 PREFIX=/usr
+  make
+}
+
+package() {
+  cd seeker
+  make INSTALL_ROOT="$pkgdir" install
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
