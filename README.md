@@ -69,3 +69,10 @@ Prueba sin portal: `seeker --pick --pick-mode=folder --pick-result=/tmp/pick.jso
 ## Licencia
 
 MIT
+
+## Idiomas
+
+El código está en inglés (`qsTr("…")`, `tr("…")`) y cada idioma es un catálogo JSON en `i18n/<idioma>.json` (texto en inglés →
+traducción). Hoy: español (`es`). Un idioma sin catálogo se ve en inglés; `SEEKER_LANG=es` fuerza uno.
+`scripts/check-i18n.py` comprueba que no falta ni sobra ninguna cadena.
+

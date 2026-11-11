@@ -1,4 +1,6 @@
 #include "BrowserController.h"
+
+#include <QCoreApplication>
 #include "OpenWithController.h"
 #include "Theme.h"
 #include "Thumbnailers.h"
@@ -88,7 +90,7 @@ QString BrowserController::displayPath() const {
     const QString home = QDir::homePath();
     QString p = currentPath();
     if (p == home)
-        return QStringLiteral("Inicio");
+        return QCoreApplication::translate("Seeker", "Home");
     if (p.startsWith(home + QLatin1Char('/')))
         return p.mid(home.size() + 1); // skip "~/" noise — show Documentos/… under home
     return p;
@@ -126,17 +128,17 @@ QVector<BrowserController::DefaultPin> BrowserController::defaultHomePins() cons
             return;
         out.push_back({label, icon, symbol, path});
     };
-    add(QStandardPaths::DesktopLocation, QStringLiteral("Escritorio"), QStringLiteral("user-desktop"),
+    add(QStandardPaths::DesktopLocation, QCoreApplication::translate("Seeker", "Desktop"), QStringLiteral("user-desktop"),
         QStringLiteral("desktop_windows"));
-    add(QStandardPaths::DocumentsLocation, QStringLiteral("Documentos"), QStringLiteral("folder-documents"),
+    add(QStandardPaths::DocumentsLocation, QCoreApplication::translate("Seeker", "Documents"), QStringLiteral("folder-documents"),
         QStringLiteral("description"));
-    add(QStandardPaths::DownloadLocation, QStringLiteral("Descargas"), QStringLiteral("folder-download"),
+    add(QStandardPaths::DownloadLocation, QCoreApplication::translate("Seeker", "Downloads"), QStringLiteral("folder-download"),
         QStringLiteral("download"));
-    add(QStandardPaths::PicturesLocation, QStringLiteral("Imágenes"), QStringLiteral("folder-pictures"),
+    add(QStandardPaths::PicturesLocation, QCoreApplication::translate("Seeker", "Pictures"), QStringLiteral("folder-pictures"),
         QStringLiteral("image"));
-    add(QStandardPaths::MusicLocation, QStringLiteral("Música"), QStringLiteral("folder-music"),
+    add(QStandardPaths::MusicLocation, QCoreApplication::translate("Seeker", "Music"), QStringLiteral("folder-music"),
         QStringLiteral("music_note"));
-    add(QStandardPaths::MoviesLocation, QStringLiteral("Vídeos"), QStringLiteral("folder-videos"),
+    add(QStandardPaths::MoviesLocation, QCoreApplication::translate("Seeker", "Videos"), QStringLiteral("folder-videos"),
         QStringLiteral("video_library"));
     return out;
 }
@@ -188,7 +190,7 @@ void BrowserController::seedDefaultPinsIfNeeded() {
 QVariantList BrowserController::places() const {
     // Fixed: Inicio → user pins (incl. seeded XDG) → Papelera.
     QVariantList list;
-    list << builtinPlace(QStringLiteral("home"), QStringLiteral("Inicio"), QStringLiteral("user-home"),
+    list << builtinPlace(QStringLiteral("home"), QCoreApplication::translate("Seeker", "Home"), QStringLiteral("user-home"),
                          QStringLiteral("home"), QDir::homePath());
 
     const QStringList builtins = builtinPlacePaths();
@@ -217,7 +219,7 @@ QVariantList BrowserController::places() const {
         };
     }
 
-    list << builtinPlace(QStringLiteral("trash"), QStringLiteral("Papelera"), QStringLiteral("user-trash"),
+    list << builtinPlace(QStringLiteral("trash"), QCoreApplication::translate("Seeker", "Trash"), QStringLiteral("user-trash"),
                          QStringLiteral("delete"), m_trash.trashPath());
     return list;
 }
@@ -457,7 +459,7 @@ QString BrowserController::expandTypedPath(const QString &typed) const {
     const QString home = QDir::homePath();
     if (raw.isEmpty())
         return {};
-    if (raw == QLatin1String("Inicio") || raw == QLatin1String("~"))
+    if ((raw == QLatin1String("Inicio") || raw == QCoreApplication::translate("Seeker", "Home")) || raw == QLatin1String("~"))
         return home;
     if (raw.startsWith(QLatin1String("~/")))
         return home + raw.mid(1);
@@ -488,7 +490,7 @@ QVariantList BrowserController::pathSuggestions(const QString &typed, int maxCou
 
         QString label;
         if (clean == home)
-            label = QStringLiteral("Inicio");
+            label = QCoreApplication::translate("Seeker", "Home");
         else if (clean == QLatin1String("/"))
             label = QStringLiteral("/");
         else
@@ -507,7 +509,7 @@ QVariantList BrowserController::pathSuggestions(const QString &typed, int maxCou
 
     // Focus = typed path if it is a dir; otherwise its parent (partial name).
     QString focus;
-    if (raw.isEmpty() || raw == QLatin1String("~") || raw == QLatin1String("Inicio")) {
+    if (raw.isEmpty() || raw == QLatin1String("~") || (raw == QLatin1String("Inicio") || raw == QCoreApplication::translate("Seeker", "Home"))) {
         focus = home;
     } else if (raw.endsWith(QLatin1Char('/'))) {
         focus = QDir::cleanPath(expandTypedPath(raw));
@@ -556,10 +558,10 @@ void BrowserController::cycleViewMode(int delta) {
 QString BrowserController::viewModeLabel(const QString &mode) const {
     const QString m = mode.trimmed().isEmpty() ? m_viewMode : mode.trimmed().toLower();
     if (m == QLatin1String("list"))
-        return QStringLiteral("Lista");
+        return QCoreApplication::translate("Seeker", "List");
     if (m == QLatin1String("details"))
-        return QStringLiteral("Detalles");
-    return QStringLiteral("Cuadrícula");
+        return QCoreApplication::translate("Seeker", "Details");
+    return QCoreApplication::translate("Seeker", "Grid");
 }
 
 QString BrowserController::viewModeIcon(const QString &mode) const {
@@ -610,7 +612,7 @@ void BrowserController::pushHistory(const QString &path) {
 void BrowserController::navigate(const QString &path) {
     QString raw = path.trimmed();
     const QString home = QDir::homePath();
-    if (raw == QLatin1String("Inicio") || raw == QLatin1String("~"))
+    if ((raw == QLatin1String("Inicio") || raw == QCoreApplication::translate("Seeker", "Home")) || raw == QLatin1String("~"))
         raw = home;
     else if (raw.startsWith(QLatin1String("~/")))
         raw = home + raw.mid(1);
@@ -621,7 +623,7 @@ void BrowserController::navigate(const QString &path) {
     if (fi.exists() && fi.isFile())
         target = fi.absolutePath();
     if (!QDir(target).exists()) {
-        emit errorOccurred(tr("No se puede abrir: %1").arg(local));
+        emit errorOccurred(tr("Cannot open: %1").arg(local));
         return;
     }
     m_model->setPath(target);
@@ -634,7 +636,7 @@ void BrowserController::openPath(const QString &path) {
     const QString local = ensureLocal(path);
     QFileInfo fi(local);
     if (!fi.exists()) {
-        emit errorOccurred(tr("No existe: %1").arg(local));
+        emit errorOccurred(tr("Does not exist: %1").arg(local));
         return;
     }
     if (fi.isDir()) {
@@ -656,7 +658,7 @@ void BrowserController::openPath(const QString &path) {
                        [&](const QString &m) { return mimeType.inherits(m); })) {
         if (QProcess::startDetached(fi.absoluteFilePath(), {}, fi.absolutePath()))
             return;
-        emit errorOccurred(tr("No se pudo ejecutar: %1").arg(fi.fileName()));
+        emit errorOccurred(tr("Could not run: %1").arg(fi.fileName()));
         return;
     }
 
@@ -667,7 +669,7 @@ void BrowserController::openPath(const QString &path) {
             m_openWith->openPath(local);
             return;
         }
-        emit errorOccurred(tr("Ninguna aplicación asociada a %1").arg(mime));
+        emit errorOccurred(tr("No application associated with %1").arg(mime));
         return;
     }
 
@@ -679,7 +681,7 @@ void BrowserController::openPath(const QString &path) {
         m_openWith->openPath(local);
         return;
     }
-    emit errorOccurred(tr("No se pudo abrir: %1").arg(local));
+    emit errorOccurred(tr("Could not open: %1").arg(local));
 }
 
 void BrowserController::openTerminalHere(const QString &dir) {
@@ -688,7 +690,7 @@ void BrowserController::openTerminalHere(const QString &dir) {
     if (fi.exists() && !fi.isDir())
         path = fi.absolutePath();
     if (!QFileInfo(path).isDir()) {
-        emit errorOccurred(tr("No es una carpeta: %1").arg(path));
+        emit errorOccurred(tr("Not a folder: %1").arg(path));
         return;
     }
 
@@ -726,7 +728,7 @@ void BrowserController::openTerminalHere(const QString &dir) {
             return;
     }
 
-    emit errorOccurred(tr("No se pudo abrir un terminal"));
+    emit errorOccurred(tr("Could not open a terminal"));
 }
 
 void BrowserController::goUp() {
@@ -837,7 +839,7 @@ QString BrowserController::uniqueDestPath(const QString &destDir, const QFileInf
 QString BrowserController::uniqueNameIn(const QString &dir, const QString &baseName) const {
     QString name = baseName;
     if (name.isEmpty())
-        name = tr("Carpeta nueva");
+        name = tr("Untitled folder");
     QString dest = QDir(dir).filePath(name);
     if (!QFile::exists(dest))
         return name;
@@ -885,7 +887,7 @@ void BrowserController::paste() {
             ok = copyPath(src, dest);
         }
         if (!ok)
-            emit errorOccurred(tr("No se pudo pegar: %1").arg(fi.fileName()));
+            emit errorOccurred(tr("Could not paste: %1").arg(fi.fileName()));
         else {
             sources << src;
             pasted << dest;
@@ -921,7 +923,7 @@ QString BrowserController::uriList(const QStringList &paths) const {
 void BrowserController::dropUrls(const QVariantList &urls, const QString &destDirRaw, bool copy) {
     const QString destDir = QDir::cleanPath(ensureLocal(destDirRaw));
     if (destDir.isEmpty() || !QFileInfo(destDir).isDir()) {
-        emit errorOccurred(tr("Destino de soltado no válido"));
+        emit errorOccurred(tr("Invalid drop target"));
         return;
     }
 
@@ -961,7 +963,7 @@ void BrowserController::dropUrls(const QVariantList &urls, const QString &destDi
         if (fi.isDir()) {
             const QString srcSlash = src.endsWith(QLatin1Char('/')) ? src : src + QLatin1Char('/');
             if (destDir == src || destDir.startsWith(srcSlash)) {
-                emit errorOccurred(tr("No se puede soltar una carpeta dentro de sí misma"));
+                emit errorOccurred(tr("A folder cannot be dropped into itself"));
                 continue;
             }
         }
@@ -976,7 +978,7 @@ void BrowserController::dropUrls(const QVariantList &urls, const QString &destDi
                 ok = copyPath(src, dest) && removePath(src);
         }
         if (!ok)
-            emit errorOccurred(tr("No se pudo soltar: %1").arg(fi.fileName()));
+            emit errorOccurred(tr("Could not drop: %1").arg(fi.fileName()));
         else {
             from << src;
             to << dest;
@@ -1046,7 +1048,7 @@ void BrowserController::trashSelection() {
         const QVector<TrashEntry> moved = w->result();
         w->deleteLater();
         if (moved.isEmpty()) {
-            emit errorOccurred(tr("No se pudo mover a la papelera"));
+            emit errorOccurred(tr("Could not move to the trash"));
             refresh();
             return;
         }
@@ -1084,7 +1086,7 @@ void BrowserController::emptyTrash() {
         if (ok)
             emit trashEmptied();
         else
-            emit errorOccurred(tr("No se pudo vaciar la papelera"));
+            emit errorOccurred(tr("Could not empty the trash"));
         // Drop undo entries that pointed at trash contents — they're gone.
         m_undo.clear();
         emit undoChanged();
@@ -1105,11 +1107,11 @@ void BrowserController::renameSelected(const QString &newName) {
     if (dest == src)
         return;
     if (QFile::exists(dest)) {
-        emit errorOccurred(tr("Ya existe: %1").arg(newName.trimmed()));
+        emit errorOccurred(tr("Already exists: %1").arg(newName.trimmed()));
         return;
     }
     if (!QFile::rename(src, dest)) {
-        emit errorOccurred(tr("No se pudo renombrar"));
+        emit errorOccurred(tr("Could not rename"));
         return;
     }
     pushUndo(UndoOp{UndoKind::Rename, {src}, {dest}});
@@ -1120,18 +1122,18 @@ void BrowserController::renameSelected(const QString &newName) {
 QString BrowserController::createFolder(const QString &preferredName) {
     const QString raw = preferredName.trimmed();
     if (raw.isEmpty()) {
-        emit errorOccurred(tr("El nombre no puede estar vacío"));
+        emit errorOccurred(tr("The name cannot be empty"));
         return {};
     }
     if (raw.contains(QLatin1Char('/')) || raw == QLatin1String(".") || raw == QLatin1String("..")) {
-        emit errorOccurred(tr("Nombre no válido"));
+        emit errorOccurred(tr("Invalid name"));
         return {};
     }
     const QString dir = currentPath();
     const QString name = uniqueNameIn(dir, raw);
     const QString path = QDir(dir).filePath(name);
     if (!QDir().mkdir(path)) {
-        emit errorOccurred(tr("No se pudo crear la carpeta"));
+        emit errorOccurred(tr("Could not create the folder"));
         return {};
     }
     pushUndo(UndoOp{UndoKind::CreateFolder, {}, {path}});
@@ -1143,7 +1145,7 @@ QString BrowserController::createFolder(const QString &preferredName) {
 
 void BrowserController::undo() {
     if (m_undo.isEmpty()) {
-        emit errorOccurred(tr("Nada que deshacer"));
+        emit errorOccurred(tr("Nothing to undo"));
         return;
     }
     const UndoOp op = m_undo.takeLast();
@@ -1205,7 +1207,7 @@ void BrowserController::undo() {
     }
 
     if (!ok)
-        emit errorOccurred(tr("No se pudo deshacer por completo"));
+        emit errorOccurred(tr("Could not undo completely"));
     refresh();
     if (!restored.isEmpty())
         setSelectedPaths(restored);
@@ -1266,7 +1268,7 @@ QString BrowserController::duplicateSelection() {
     const QFileInfo fi(src);
     const QString dest = uniqueDestPath(fi.absolutePath(), fi);
     if (!copyPath(src, dest)) {
-        emit errorOccurred(tr("No se pudo duplicar"));
+        emit errorOccurred(tr("Could not duplicate"));
         return {};
     }
     pushUndo(UndoOp{UndoKind::Duplicate, {src}, {dest}});

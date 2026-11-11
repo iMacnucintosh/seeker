@@ -219,9 +219,9 @@ Item {
                 }
             }
 
-            ModeRow { modeId: "grid"; label: "Cuadrícula"; iconName: "grid_view" }
-            ModeRow { modeId: "list"; label: "Lista"; iconName: "view_list" }
-            ModeRow { modeId: "details"; label: "Detalles"; iconName: "view_column" }
+            ModeRow { modeId: "grid"; label: qsTr("Grid"); iconName: "grid_view" }
+            ModeRow { modeId: "list"; label: qsTr("List"); iconName: "view_list" }
+            ModeRow { modeId: "details"; label: qsTr("Details"); iconName: "view_column" }
         }
     }
 }

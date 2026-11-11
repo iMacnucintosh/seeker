@@ -1,4 +1,6 @@
 #include "ArchiveController.h"
+
+#include <QCoreApplication>
 #include "BrowserController.h"
 #include "FileManager1.h"
 #include "PickController.h"
@@ -14,7 +16,10 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QFontDatabase>
+#include "JsonTranslator.h"
+
 #include <QGuiApplication>
+#include <QLocale>
 #include <QIcon>
 #include <QKeyEvent>
 #include <QKeySequence>
@@ -104,12 +109,24 @@ void loadSylphrenaUiFont() {
 
 } // namespace
 
+/// The code is in English; a language with a catalogue in i18n/<lang>.json (SEEKER_LANG overrides the system one)
+/// is shown translated.
+static void installTranslation(QCoreApplication &app) {
+    const QString lang = qEnvironmentVariable("SEEKER_LANG", QLocale::system().name()).section(QLatin1Char('_'), 0, 0);
+    auto *t = new JsonTranslator(&app);
+    if (t->loadFile(QStringLiteral(":/i18n/%1.json").arg(lang)))
+        app.installTranslator(t);
+    else
+        delete t;
+}
+
 int main(int argc, char *argv[]) {
     qputenv("QT_QUICK_CONTROLS_STYLE", "Basic");
     QGuiApplication app(argc, argv);
+    installTranslation(app);
     app.setOrganizationName(QStringLiteral("Sylphrena"));
     app.setApplicationName(QStringLiteral("Seeker"));
-    app.setApplicationDisplayName(QStringLiteral("Archivos"));
+    app.setApplicationDisplayName(QCoreApplication::translate("Seeker", "Files"));
     app.setDesktopFileName(QStringLiteral("seeker"));
     app.setWindowIcon(QIcon::fromTheme(QStringLiteral("system-file-manager"),
                                        QIcon(QStringLiteral(":/data/seeker.svg"))));
@@ -213,7 +230,7 @@ int main(int argc, char *argv[]) {
                          if (ok) // a different cue for each: packing "closes" (falling), unpacking "opens" (rising)
                              sounds.play(archive.kind() == QLatin1String("extract") ? QStringLiteral("device-added")
                                                                                     : QStringLiteral("device-removed"));
-                         else if (message != QLatin1String("Cancelado"))
+                         else if (message != QCoreApplication::translate("Seeker", "Cancelled"))
                              sounds.play(QStringLiteral("dialog-error"));
                      });
     QObject::connect(&browser, &BrowserController::trashEmptied, &sounds,

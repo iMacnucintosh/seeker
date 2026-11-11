@@ -199,25 +199,25 @@ Item {
 
                 PropRow {
                     visible: Properties.showContents
-                    label: "Contenido"
+                    label: qsTr("Contents")
                     value: Properties.contentsLabel
                 }
                 PropRow {
-                    label: "Tamaño"
+                    label: qsTr("Size")
                     value: Properties.sizeLabel
                 }
                 PropRow {
                     visible: Properties.showModified
-                    label: "Modificado"
+                    label: qsTr("Modified")
                     value: Properties.modified
                 }
                 PropRow {
-                    label: "Ubicación"
+                    label: qsTr("Location")
                     value: Properties.location
                 }
                 PropRow {
                     visible: Properties.showPermissions
-                    label: "Permisos"
+                    label: qsTr("Permissions")
                     value: Properties.permissions
                 }
 
@@ -228,7 +228,7 @@ Item {
 
                     StyledText {
                         Layout.fillWidth: true
-                        text: "Permitir ejecutar como programa"
+                        text: qsTr("Allow running as a program")
                         color: Theme.onSurface
                         font.pixelSize: 13
                     }

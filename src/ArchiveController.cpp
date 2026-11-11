@@ -164,7 +164,7 @@ QString ArchiveController::lastErrorLine() const {
     const QStringList lines = m_stderr.split(QLatin1Char('\n'), Qt::SkipEmptyParts);
     for (const QString &raw : lines)
         if (raw.contains(QLatin1String("Path contains '..'")))
-            return tr("el archivo contiene rutas inseguras («..») y no se ha extraído");
+            return tr("the archive contains unsafe paths (“..”) and was not extracted");
     for (const QString &raw : lines) {
         QString l = raw.trimmed();
         const bool echo = l.startsWith(QLatin1String("a ")) || l.startsWith(QLatin1String("x "));
@@ -184,11 +184,11 @@ QString ArchiveController::lastErrorLine() const {
 
 void ArchiveController::compress(const QStringList &paths) {
     if (!available()) {
-        emit finished(false, tr("Falta bsdtar (paquete libarchive) para comprimir"), {});
+        emit finished(false, tr("bsdtar (libarchive package) is needed to compress"), {});
         return;
     }
     if (busy()) {
-        emit finished(false, tr("Ya hay una operación en curso"), {});
+        emit finished(false, tr("An operation is already in progress"), {});
         return;
     }
     if (paths.isEmpty())
@@ -200,11 +200,11 @@ void ArchiveController::compress(const QStringList &paths) {
     for (const QString &p : paths) {
         const QFileInfo fi(p);
         if (!fi.exists() && !fi.isSymLink()) {
-            emit finished(false, tr("No existe: %1").arg(fi.fileName()), {});
+            emit finished(false, tr("Does not exist: %1").arg(fi.fileName()), {});
             return;
         }
         if (fi.absolutePath() != parent) {
-            emit finished(false, tr("Selecciona elementos de una sola carpeta"), {});
+            emit finished(false, tr("Select items from a single folder"), {});
             return;
         }
         names << fi.fileName();
@@ -217,7 +217,7 @@ void ArchiveController::compress(const QStringList &paths) {
         if (base.isEmpty())
             base = first.fileName();
     } else {
-        base = tr("Comprimido");
+        base = tr("Compressed");
     }
 
     // A taken name gets the date and time (so repeated runs are distinguishable and never
@@ -234,15 +234,15 @@ void ArchiveController::compress(const QStringList &paths) {
     m_createdDir = false;
 
     m_kind = QStringLiteral("compress");
-    begin(Stage::Compressing, names.size() == 1 ? tr("Comprimiendo «%1»…").arg(names.first())
-                                                : tr("Comprimiendo %1 elementos…").arg(names.size()));
+    begin(Stage::Compressing, names.size() == 1 ? tr("Compressing “%1”…").arg(names.first())
+                                                : tr("Compressing %1 items…").arg(names.size()));
     m_proc = new QProcess(this);
     m_proc->setStandardInputFile(QProcess::nullDevice());
     connect(m_proc, &QProcess::readyReadStandardError, this, &ArchiveController::readProgress);
     connect(m_proc, &QProcess::finished, this, &ArchiveController::onFinished);
     connect(m_proc, &QProcess::errorOccurred, this, [this](QProcess::ProcessError e) {
         if (e == QProcess::FailedToStart)
-            fail(tr("No se pudo iniciar bsdtar"));
+            fail(tr("Could not start bsdtar"));
     });
     QStringList args = {QStringLiteral("--format"), QStringLiteral("zip"), QStringLiteral("-cvf"), m_partPath,
                         QStringLiteral("-C"), parent, QStringLiteral("--")};
@@ -285,11 +285,11 @@ void ArchiveController::compress(const QStringList &paths) {
 
 void ArchiveController::extractHere(const QString &archivePath) {
     if (busy()) {
-        emit finished(false, tr("Ya hay una operación en curso"), {});
+        emit finished(false, tr("An operation is already in progress"), {});
         return;
     }
     if (!canExtract(archivePath)) {
-        emit finished(false, tr("Este tipo de archivo no se puede extraer"), {});
+        emit finished(false, tr("This type of file cannot be extracted"), {});
         return;
     }
     const QFileInfo fi(archivePath);
@@ -299,7 +299,7 @@ void ArchiveController::extractHere(const QString &archivePath) {
     m_listing.clear();
 
     m_kind = QStringLiteral("extract");
-    begin(Stage::Listing, tr("Leyendo «%1»…").arg(fi.fileName()));
+    begin(Stage::Listing, tr("Reading “%1”…").arg(fi.fileName()));
     m_proc = new QProcess(this);
     m_proc->setStandardInputFile(QProcess::nullDevice());
     connect(m_proc, &QProcess::readyReadStandardError, this, &ArchiveController::readProgress);
@@ -312,7 +312,7 @@ void ArchiveController::extractHere(const QString &archivePath) {
     connect(m_proc, &QProcess::finished, this, &ArchiveController::onFinished);
     connect(m_proc, &QProcess::errorOccurred, this, [this](QProcess::ProcessError e) {
         if (e == QProcess::FailedToStart)
-            fail(tr("No se pudo iniciar bsdtar"));
+            fail(tr("Could not start bsdtar"));
     });
     m_proc->start(m_bsdtar, {QStringLiteral("-tf"), m_archive});
 }
@@ -324,7 +324,7 @@ void ArchiveController::startExtraction(const QString &destDir, const QString &r
     m_createdDir = createdDir;
     m_stripTop = stripTop;
     m_stage = Stage::Extracting;
-    m_taskText = tr("Extrayendo «%1»…").arg(QFileInfo(m_archive).fileName());
+    m_taskText = tr("Extracting “%1”…").arg(QFileInfo(m_archive).fileName());
     m_detail.clear();
     m_stderr.clear();
     emit busyChanged();
@@ -337,7 +337,7 @@ void ArchiveController::startExtraction(const QString &destDir, const QString &r
     connect(m_proc, &QProcess::finished, this, &ArchiveController::onFinished);
     connect(m_proc, &QProcess::errorOccurred, this, [this](QProcess::ProcessError e) {
         if (e == QProcess::FailedToStart)
-            fail(tr("No se pudo iniciar bsdtar"));
+            fail(tr("Could not start bsdtar"));
     });
     startPolling(QFileInfo(m_archive).size()); // bytes of the archive read so far / archive size
     // bsdtar already drops absolute paths and "..": nothing can land outside destDir.
@@ -385,7 +385,7 @@ void ArchiveController::onFinished(int code, QProcess::ExitStatus status) {
     const bool ok = status == QProcess::NormalExit && code == 0;
 
     if (m_cancelled) {
-        fail(tr("Cancelado"));
+        fail(tr("Cancelled"));
         return;
     }
 
@@ -393,20 +393,20 @@ void ArchiveController::onFinished(int code, QProcess::ExitStatus status) {
     case Stage::Compressing: {
         if (!ok) {
             const QString why = lastErrorLine();
-            fail(why.isEmpty() ? tr("No se pudo comprimir") : tr("No se pudo comprimir: %1").arg(why));
+            fail(why.isEmpty() ? tr("Could not compress") : tr("Could not compress: %1").arg(why));
             return;
         }
         if (!QFile::rename(m_partPath, m_archive)) {
-            fail(tr("No se pudo guardar el archivo comprimido"));
+            fail(tr("Could not save the compressed file"));
             return;
         }
-        done(tr("Creado «%1»").arg(QFileInfo(m_archive).fileName()), m_archive);
+        done(tr("Created “%1”").arg(QFileInfo(m_archive).fileName()), m_archive);
         return;
     }
     case Stage::Listing: {
         if (!ok) {
             const QString why = lastErrorLine();
-            fail(why.isEmpty() ? tr("No se pudo leer el archivo") : tr("No se pudo leer el archivo: %1").arg(why));
+            fail(why.isEmpty() ? tr("Could not read the file") : tr("Could not read the file: %1").arg(why));
             return;
         }
         // One top-level entry → extract beside the archive; anything else → into its own folder.
@@ -429,7 +429,7 @@ void ArchiveController::onFinished(int code, QProcess::ExitStatus status) {
                 topIsDir = true;
         }
         if (entries == 0) {
-            fail(tr("El archivo está vacío"));
+            fail(tr("The file is empty"));
             return;
         }
         const QString parent = QFileInfo(m_archive).absolutePath();
@@ -446,7 +446,7 @@ void ArchiveController::onFinished(int code, QProcess::ExitStatus status) {
                 // (no "carpeta (2)/carpeta/…").
                 const QString dest = QDir(parent).filePath(uniqueName(parent, top));
                 if (!QDir().mkpath(dest)) {
-                    fail(tr("No se pudo crear la carpeta «%1»").arg(QFileInfo(dest).fileName()));
+                    fail(tr("Could not create the folder “%1”").arg(QFileInfo(dest).fileName()));
                     return;
                 }
                 startExtraction(dest, dest, true, true);
@@ -456,7 +456,7 @@ void ArchiveController::onFinished(int code, QProcess::ExitStatus status) {
         const QString folder = uniqueName(parent, archiveBaseName(QFileInfo(m_archive).fileName()));
         const QString dest = QDir(parent).filePath(folder);
         if (!QDir().mkpath(dest)) {
-            fail(tr("No se pudo crear la carpeta «%1»").arg(folder));
+            fail(tr("Could not create the folder “%1”").arg(folder));
             return;
         }
         startExtraction(dest, dest, true);
@@ -465,10 +465,10 @@ void ArchiveController::onFinished(int code, QProcess::ExitStatus status) {
     case Stage::Extracting: {
         if (!ok) {
             const QString why = lastErrorLine();
-            fail(why.isEmpty() ? tr("No se pudo extraer") : tr("No se pudo extraer: %1").arg(why));
+            fail(why.isEmpty() ? tr("Could not extract") : tr("Could not extract: %1").arg(why));
             return;
         }
-        done(tr("Extraído «%1»").arg(QFileInfo(m_resultPath).fileName()), m_resultPath);
+        done(tr("Extracted “%1”").arg(QFileInfo(m_resultPath).fileName()), m_resultPath);
         return;
     }
     case Stage::Idle:

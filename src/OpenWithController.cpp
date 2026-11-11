@@ -168,7 +168,7 @@ void OpenWithController::openPath(const QString &path) {
         local = url.toLocalFile();
     local = QFileInfo(local).absoluteFilePath();
     if (!QFileInfo::exists(local) || QFileInfo(local).isDir()) {
-        emit errorOccurred(tr("No se puede abrir con una app: %1").arg(path));
+        emit errorOccurred(tr("Cannot open with an app: %1").arg(path));
         return;
     }
 
@@ -454,7 +454,7 @@ void OpenWithController::launchSelected() {
         setDefaultDesktop(id, m_mimeName);
 
     if (!launchDesktop(desktopFile, m_path)) {
-        emit errorOccurred(tr("No se pudo abrir con %1").arg(app.value(QStringLiteral("name")).toString()));
+        emit errorOccurred(tr("Could not open with %1").arg(app.value(QStringLiteral("name")).toString()));
         return;
     }
     close();

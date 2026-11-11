@@ -103,7 +103,7 @@ Item {
                 spacing: 8
                 StyledText {
                     Layout.fillWidth: true
-                    text: "Icono de carpeta"
+                    text: qsTr("Folder icon")
                     color: Theme.onSurface
                     font.pixelSize: 18
                     font.weight: Font.Medium
@@ -117,7 +117,7 @@ Item {
             StyledText {
                 Layout.fillWidth: true
                 text: root.targetPath.length
-                    ? ("Marca de agua para «" + root.targetPath.split("/").pop() + "»")
+                    ? qsTr("Watermark for “%1”").arg(root.targetPath.split("/").pop())
                     : ""
                 color: Theme.onSurfaceVariant
                 font.pixelSize: 13
@@ -127,7 +127,7 @@ Item {
             TextField {
                 id: searchField
                 Layout.fillWidth: true
-                placeholderText: "Buscar iconos Material…"
+                placeholderText: qsTr("Search Material icons…")
                 color: Theme.onSurface
                 placeholderTextColor: Theme.onSurfaceVariant
                 selectedTextColor: Theme.onPrimary
@@ -212,7 +212,7 @@ Item {
                 StyledText {
                     anchors.centerIn: parent
                     visible: grid.count === 0
-                    text: "Sin resultados"
+                    text: qsTr("No results")
                     color: Theme.onSurfaceVariant
                     font.pixelSize: 14
                 }
@@ -234,8 +234,8 @@ Item {
                     text: {
                         const _ = Browser.folderIconsRevision
                         return Browser.hasCustomFolderIcon(root.targetPath)
-                            ? "Quitar icono personalizado"
-                            : "Clic en un icono para aplicarlo"
+                            ? qsTr("Remove custom icon")
+                            : qsTr("Click an icon to apply it")
                     }
                     color: Theme.onSurfaceVariant
                     font.pixelSize: 12

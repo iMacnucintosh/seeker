@@ -96,7 +96,7 @@ Item {
                     spacing: 2
 
                     StyledText {
-                        text: "Abrir con…"
+                        text: qsTr("Open with")
                         color: Theme.onSurface
                         font.pixelSize: 16
                         font.weight: Font.Medium
@@ -197,7 +197,7 @@ Item {
                     StyledText {
                         anchors.centerIn: parent
                         visible: appList.count === 0
-                        text: "Ninguna aplicación compatible"
+                        text: qsTr("No compatible application")
                         color: Theme.onSurfaceVariant
                         font.pixelSize: 13
                     }
@@ -232,7 +232,7 @@ Item {
 
                 StyledText {
                     Layout.fillWidth: true
-                    text: "Usar siempre para este tipo"
+                    text: qsTr("Always use for this type")
                     color: Theme.onSurfaceVariant
                     font.pixelSize: 13
                     MouseArea {
@@ -257,7 +257,7 @@ Item {
                     StyledText {
                         id: cancelLabel
                         anchors.centerIn: parent
-                        text: "Cancelar"
+                        text: qsTr("Cancel")
                         color: Theme.onSurfaceVariant
                         font.pixelSize: 13
                         font.weight: Font.Medium
@@ -281,7 +281,7 @@ Item {
                     StyledText {
                         id: openLabel
                         anchors.centerIn: parent
-                        text: "Abrir"
+                        text: qsTr("Open")
                         color: Theme.onPrimary
                         font.pixelSize: 13
                         font.weight: Font.Medium

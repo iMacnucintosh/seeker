@@ -7,6 +7,7 @@ DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000
 
 SOURCES += \
     src/main.cpp \
+    src/JsonTranslator.cpp \
     src/ArchiveController.cpp \
     src/SoundPlayer.cpp \
     src/BrowserController.cpp \
@@ -22,6 +23,7 @@ SOURCES += \
     src/OpenWithController.cpp
 
 HEADERS += \
+    src/JsonTranslator.h \
     src/ArchiveController.h \
     src/SoundPlayer.h \
     src/BrowserController.h \
