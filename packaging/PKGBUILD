@@ -8,12 +8,12 @@ pkgdesc="Material You file manager for the Sylphrena shell"
 arch=('x86_64')
 url="https://github.com/iMacnucintosh/seeker"
 license=('MIT')
-depends=('qt6-base' 'qt6-declarative' 'qt6-svg' 'glib2' 'file' 'zip')
+depends=('qt6-base' 'qt6-declarative' 'qt6-svg' 'qt6-wayland' 'glib2' 'file' 'zip')
 makedepends=('git')
 optdepends=('pipewire: sounds of the sound theme'
             'sound-theme-freedesktop: the sounds themselves'
             'gvfs: trash and mounts of other devices')
-provides=('seeker')
+# /usr/bin/seeker would clash with the other `seeker` of the AUR (a disk benchmark)
 conflicts=('seeker')
 source=("git+${url}.git")
 sha256sums=('SKIP')
