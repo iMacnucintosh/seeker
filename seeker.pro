@@ -42,7 +42,7 @@ RESOURCES += qml.qrc
 
 # Default install prefix: user-local (a package passes PREFIX=/usr). It must be set before the paths below use it.
 isEmpty(PREFIX) {
-    PREFIX = $$HOME/.local
+    PREFIX = $$(HOME)/.local
 }
 
 target.path = $$PREFIX/bin
