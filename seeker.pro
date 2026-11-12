@@ -40,6 +40,11 @@ HEADERS += \
 
 RESOURCES += qml.qrc
 
+# Default install prefix: user-local (a package passes PREFIX=/usr). It must be set before the paths below use it.
+isEmpty(PREFIX) {
+    PREFIX = $$HOME/.local
+}
+
 target.path = $$PREFIX/bin
 desktop.path = $$PREFIX/share/applications
 desktop.files = data/seeker.desktop
@@ -52,10 +57,6 @@ portal_libexec.path = $$PREFIX/libexec
 portal_libexec.files = portal/xdg-desktop-portal-seeker
 portal_portal.path = $$PREFIX/share/xdg-desktop-portal/portals
 portal_portal.files = portal/seeker.portal
-
-isEmpty(PREFIX) {
-    PREFIX = $$HOME/.local
-}
 
 INSTALLS += target desktop dbus icons portal_libexec portal_portal
 
