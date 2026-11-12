@@ -35,28 +35,32 @@ QStringList xdgDataDirs() {
     return out;
 }
 
-QString shellQuote(const QString &s) {
-    // QProcess::splitCommand understands double quotes; paths with spaces
-    // (e.g. "Dash T7.blend") must not be re-tokenized.
-    QString out = s;
-    out.replace(QLatin1Char('\\'), QLatin1String("\\\\"));
-    out.replace(QLatin1Char('"'), QLatin1String("\\\""));
-    return QLatin1Char('"') + out + QLatin1Char('"');
-}
-
-QString expandExec(QString exec, const QString &absPath, const QString &outPath, int edge) {
+// The thumbnailer's Exec template, split into arguments first and then filled in, each placeholder once: quoting
+// the paths into the string and splitting afterwards broke on a name with a quote (QProcess::splitCommand does not
+// take \" as an escape), and a name holding "%o" or "%s" was filled in again by the next replacement.
+QStringList expandExec(const QString &exec, const QString &absPath, const QString &outPath, int edge) {
     const QString uri = QString::fromUtf8(QUrl::fromLocalFile(absPath).toEncoded());
-    const QString qPath = shellQuote(absPath);
-    const QString qOut = shellQuote(outPath);
-    const QString qUri = shellQuote(uri);
-    exec.replace(QLatin1String("%s"), QString::number(std::max(32, edge)));
-    exec.replace(QLatin1String("%u"), qUri);
-    exec.replace(QLatin1String("%U"), qUri);
-    exec.replace(QLatin1String("%i"), qPath);
-    exec.replace(QLatin1String("%o"), qOut);
-    exec.replace(QLatin1String("%f"), qPath);
-    exec.replace(QLatin1String("%F"), qPath);
-    return exec;
+    const QString size = QString::number(std::max(32, edge));
+    QStringList out;
+    for (const QString &part : QProcess::splitCommand(exec)) {
+        QString arg;
+        for (int i = 0; i < part.size(); ++i) {
+            if (part.at(i) != QLatin1Char('%') || i + 1 >= part.size()) {
+                arg += part.at(i);
+                continue;
+            }
+            switch (part.at(++i).unicode()) {
+            case 's': arg += size; break;
+            case 'u': case 'U': arg += uri; break;
+            case 'i': case 'f': case 'F': arg += absPath; break;
+            case 'o': arg += outPath; break;
+            case '%': arg += QLatin1Char('%'); break;
+            default: arg += QLatin1Char('%'); arg += part.at(i); break;
+            }
+        }
+        out << arg;
+    }
+    return out;
 }
 
 bool tryExecOk(const QString &tryExec) {
@@ -270,8 +274,7 @@ QImage Thumbnailers::run(const Entry &entry, const QString &absPath, int edge) {
     const QString outPath = tmp.fileName();
     tmp.close();
 
-    const QString prepared = expandExec(entry.exec, absPath, outPath, edge);
-    const QStringList parts = QProcess::splitCommand(prepared);
+    const QStringList parts = expandExec(entry.exec, absPath, outPath, edge);
     if (parts.isEmpty()) {
         QFile::remove(outPath);
         return {};

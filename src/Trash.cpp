@@ -116,12 +116,6 @@ QString Trash::findTrashFileForOriginal(const QString &originalAbs) const {
     return {};
 }
 
-bool Trash::moveToTrash(const QStringList &paths) {
-    if (paths.isEmpty())
-        return true;
-    return !moveToTrashEntries(paths).isEmpty();
-}
-
 QVector<TrashEntry> Trash::moveToTrashEntries(const QStringList &paths) {
     const QString root = homeTrashRoot();
     const QString filesDir = QDir(root).filePath(QStringLiteral("files"));
