@@ -1,6 +1,6 @@
 pkgbase = seeker-git
 	pkgdesc = Material You file manager for the Sylphrena shell
-	pkgver = r0.0000000
+	pkgver = 0.0.0.r0.g0000000
 	pkgrel = 1
 	url = https://github.com/iMacnucintosh/seeker
 	arch = x86_64
