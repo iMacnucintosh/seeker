@@ -109,7 +109,7 @@ Item {
             StyledText {
                 id: cancelLabel
                 anchors.centerIn: parent
-                text: root.busy ? "Cancelar" : "Cerrar"
+                text: root.busy ? qsTr("Cancel") : qsTr("Close")
                 color: Theme.primary
                 font.pixelSize: 13
             }

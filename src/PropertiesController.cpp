@@ -49,13 +49,13 @@ QString PropertiesController::formatSize(qint64 bytes) {
 QString PropertiesController::formatContents(int dirs, int files) {
     QStringList parts;
     if (dirs > 0)
-        parts << (dirs == 1 ? QObject::tr("1 carpeta")
-                            : QObject::tr("%1 carpetas").arg(dirs));
+        parts << (dirs == 1 ? QObject::tr("1 folder")
+                            : QObject::tr("%1 folders").arg(dirs));
     if (files > 0)
-        parts << (files == 1 ? QObject::tr("1 archivo")
-                             : QObject::tr("%1 archivos").arg(files));
+        parts << (files == 1 ? QObject::tr("1 file")
+                             : QObject::tr("%1 files").arg(files));
     if (parts.isEmpty())
-        return QObject::tr("Vacío");
+        return QObject::tr("Empty");
     return parts.join(QStringLiteral(", "));
 }
 
@@ -83,7 +83,7 @@ void PropertiesController::resetUi() {
     m_location.clear();
     m_modified.clear();
     m_permissions.clear();
-    m_sizeLabel = tr("Calculando…");
+    m_sizeLabel = tr("Working out…");
     m_contentsLabel.clear();
     m_iconName = QStringLiteral("text-x-generic");
     m_previewPath.clear();
@@ -158,10 +158,10 @@ void PropertiesController::applySnapshot(const QStringList &paths) {
         m_previewPath = fi.absoluteFilePath();
 
         if (fi.isDir()) {
-            m_kindLabel = tr("Carpeta");
+            m_kindLabel = tr("Folder");
             m_iconName = QStringLiteral("folder");
             m_showContents = true;
-            m_contentsLabel = tr("Calculando…");
+            m_contentsLabel = tr("Working out…");
         } else {
             QMimeDatabase mimeDb;
             const QMimeType mime = mimeDb.mimeTypeForFile(fi);
@@ -178,11 +178,11 @@ void PropertiesController::applySnapshot(const QStringList &paths) {
         return;
     }
 
-    m_title = tr("%1 elementos").arg(paths.size());
-    m_kindLabel = tr("Varios elementos");
+    m_title = tr("%1 items").arg(paths.size());
+    m_kindLabel = tr("Several items");
     m_iconName = QStringLiteral("folder-documents");
     m_showContents = true;
-    m_contentsLabel = tr("Calculando…");
+    m_contentsLabel = tr("Working out…");
 
     QString commonParent;
     bool sameParent = true;
@@ -200,7 +200,7 @@ void PropertiesController::applySnapshot(const QStringList &paths) {
         else if (commonParent != parent)
             sameParent = false;
     }
-    m_location = sameParent ? displayLocation(commonParent) : tr("Varias ubicaciones");
+    m_location = sameParent ? displayLocation(commonParent) : tr("Several locations");
     // Immediate top-level mix while the recursive walk runs.
     m_contentsLabel = formatContents(topDirs, topFiles);
 }
@@ -273,7 +273,7 @@ void PropertiesController::startSizeWalk(const QStringList &paths) {
         return;
 
     m_sizeReady = false;
-    m_sizeLabel = tr("Calculando…");
+    m_sizeLabel = tr("Working out…");
     emit sizeChanged();
 
     const QStringList copy = paths;

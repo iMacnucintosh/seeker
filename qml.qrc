@@ -23,5 +23,6 @@
         <file>qml/components/OpenWithDialog.qml</file>
         <file>data/seeker.svg</file>
         <file>data/material-symbols.txt</file>
+        <file>i18n/es.json</file>
     </qresource>
 </RCC>

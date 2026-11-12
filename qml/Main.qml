@@ -12,8 +12,8 @@ ApplicationWindow {
     minimumWidth: 720
     minimumHeight: 480
     title: Pick.active
-           ? (Pick.title.length ? Pick.title : "Seleccionar")
-           : (Browser.displayPath + " — Archivos")
+           ? (Pick.title.length ? Pick.title : qsTr("Select"))
+           : qsTr("%1 — Files").arg(Browser.displayPath)
     color: Theme.surface
     font.family: Theme.uiFamily
 
@@ -334,44 +334,44 @@ ApplicationWindow {
 
                     BloomMenu.MenuRow {
                         icon: "undo"
-                        label: "Deshacer"
+                        label: qsTr("Undo")
                         enabled: Browser.canUndo
                         onClicked: Browser.undo()
                     }
                     BloomMenu.MenuRow {
                         icon: "select_all"
-                        label: "Seleccionar todo"
+                        label: qsTr("Select all")
                         onClicked: Browser.selectAll()
                     }
                     BloomMenu.MenuRow {
                         icon: "create_new_folder"
-                        label: "Nueva carpeta"
+                        label: qsTr("New folder")
                         onClicked: win.beginCreateFolder()
                     }
                     BloomMenu.MenuRow {
                         icon: Browser.model.showHidden ? "visibility" : "visibility_off"
-                        label: "Mostrar ocultos"
+                        label: qsTr("Show hidden files")
                         checkable: true
                         checked: Browser.model.showHidden
                         onClicked: Browser.model.showHidden = !Browser.model.showHidden
                     }
                     BloomMenu.MenuRow {
                         icon: "image"
-                        label: "Previsualizar"
+                        label: qsTr("Preview")
                         checkable: true
                         checked: Browser.showImagePreviews
                         onClicked: Browser.showImagePreviews = !Browser.showImagePreviews
                     }
                     BloomMenu.MenuRow {
                         icon: "folder_copy"
-                        label: "Vista previa de carpetas"
+                        label: qsTr("Folder previews")
                         checkable: true
                         checked: Browser.showFolderPreviews
                         onClicked: Browser.showFolderPreviews = !Browser.showFolderPreviews
                     }
                     BloomMenu.MenuSlider {
                         icon: "photo_size_select_large"
-                        label: "Tamaño"
+                        label: qsTr("Size")
                         from: 0
                         to: 4
                         value: Browser.iconSizeStep
@@ -379,28 +379,28 @@ ApplicationWindow {
                     }
                     BloomMenu.MenuRow {
                         icon: "arrow_upward"
-                        label: "Botón subir"
+                        label: qsTr("Up button")
                         checkable: true
                         checked: Browser.showUpButton
                         onClicked: Browser.showUpButton = !Browser.showUpButton
                     }
                     BloomMenu.MenuRow {
                         icon: "refresh"
-                        label: "Botón actualizar"
+                        label: qsTr("Refresh button")
                         checkable: true
                         checked: Browser.showRefreshButton
                         onClicked: Browser.showRefreshButton = !Browser.showRefreshButton
                     }
                     BloomMenu.MenuRow {
                         icon: "create_new_folder"
-                        label: "Botón nueva carpeta"
+                        label: qsTr("New folder button")
                         checkable: true
                         checked: Browser.showNewFolderButton
                         onClicked: Browser.showNewFolderButton = !Browser.showNewFolderButton
                     }
                     BloomMenu.MenuRow {
                         icon: "volume_up"
-                        label: "Sonidos"
+                        label: qsTr("Sounds")
                         checkable: true
                         checked: Browser.soundsEnabled
                         onClicked: Browser.soundsEnabled = !Browser.soundsEnabled
@@ -579,12 +579,12 @@ ApplicationWindow {
                             Layout.alignment: Qt.AlignVCenter
                             text: {
                                 if (Browser.trashIsEmpty)
-                                    return "La papelera está vacía"
+                                    return qsTr("The trash is empty")
                                 const n = Browser.trashCount
-                                const items = n === 1 ? "1 elemento" : n + " elementos"
+                                const items = n === 1 ? qsTr("1 item") : qsTr("%1 items").arg(n)
                                 const size = Browser.trashStatsBusy && Browser.trashSize === 0
-                                    ? "calculando tamaño…" : Browser.formatSize(Browser.trashSize)
-                                return items + " · " + size + " · se eliminarán de forma permanente"
+                                    ? qsTr("working out the size…") : Browser.formatSize(Browser.trashSize)
+                                return qsTr("%1 · %2 · they will be deleted permanently").arg(items).arg(size)
                             }
                             color: Theme.onSurfaceVariant
                             font.pixelSize: 13
@@ -602,7 +602,7 @@ ApplicationWindow {
                             StyledText {
                                 id: emptyLabel
                                 anchors.centerIn: parent
-                                text: "Vaciar papelera"
+                                text: qsTr("Empty trash")
                                 color: Theme.onError
                                 font.pixelSize: 13
                                 font.weight: Font.Medium
@@ -1038,7 +1038,7 @@ ApplicationWindow {
                                 Item { Layout.preferredWidth: 20 }
                                 StyledText {
                                     Layout.fillWidth: true
-                                    text: "Nombre"
+                                    text: qsTr("Name")
                                     color: Theme.onSurfaceVariant
                                     font.pixelSize: 11
                                     font.weight: Font.Medium
@@ -1046,7 +1046,7 @@ ApplicationWindow {
                                 StyledText {
                                     Layout.preferredWidth: 88
                                     horizontalAlignment: Text.AlignRight
-                                    text: "Tamaño"
+                                    text: qsTr("Size")
                                     color: Theme.onSurfaceVariant
                                     font.pixelSize: 11
                                     font.weight: Font.Medium
@@ -1054,7 +1054,7 @@ ApplicationWindow {
                                 StyledText {
                                     Layout.preferredWidth: 132
                                     horizontalAlignment: Text.AlignRight
-                                    text: "Modificado"
+                                    text: qsTr("Modified")
                                     color: Theme.onSurfaceVariant
                                     font.pixelSize: 11
                                     font.weight: Font.Medium
@@ -1232,7 +1232,7 @@ ApplicationWindow {
                                 return details.count === 0
                             return grid.count === 0
                         }
-                        text: "Carpeta vacía"
+                        text: qsTr("Empty folder")
                         color: Theme.onSurfaceVariant
                         font.pixelSize: 14
                     }
@@ -1262,7 +1262,7 @@ ApplicationWindow {
                     Layout.fillWidth: true
                     Layout.preferredHeight: 44
                     text: Pick.suggestedName
-                    placeholderText: "Nombre del archivo"
+                    placeholderText: qsTr("File name")
                     color: Theme.onSurface
                     placeholderTextColor: Theme.onSurfaceVariant
                     selectedTextColor: Theme.onPrimary
@@ -1295,7 +1295,7 @@ ApplicationWindow {
                     Text {
                         id: cancelLabel
                         anchors.centerIn: parent
-                        text: "Cancelar"
+                        text: qsTr("Cancel")
                         color: Theme.onSurface
                         font.pixelSize: 14
                     }
@@ -1339,39 +1339,39 @@ ApplicationWindow {
         ContextMenu.MenuRow {
             visible: win.contextKind === "empty"
             icon: "undo"
-            label: "Deshacer"
+            label: qsTr("Undo")
             enabled: Browser.canUndo
             onClicked: Browser.undo()
         }
         ContextMenu.MenuRow {
             visible: win.contextKind === "empty"
             icon: "create_new_folder"
-            label: "Nueva carpeta"
+            label: qsTr("New folder")
             onClicked: win.beginCreateFolder()
         }
         ContextMenu.MenuRow {
             visible: win.contextKind === "empty"
             icon: "terminal"
-            label: "Abrir terminal aquí"
+            label: qsTr("Open terminal here")
             onClicked: Browser.openTerminalHere()
         }
         ContextMenu.MenuRow {
             visible: win.contextKind === "empty"
             icon: "content_paste"
-            label: "Pegar"
+            label: qsTr("Paste")
             enabled: Browser.hasClipboard
             onClicked: Browser.paste()
         }
         ContextMenu.MenuRow {
             visible: win.contextKind === "empty"
             icon: "select_all"
-            label: "Seleccionar todo"
+            label: qsTr("Select all")
             onClicked: Browser.selectAll()
         }
         ContextMenu.MenuRow {
             visible: win.contextKind === "empty"
             icon: "refresh"
-            label: "Actualizar"
+            label: qsTr("Refresh")
             onClicked: Browser.refresh()
         }
 
@@ -1379,14 +1379,14 @@ ApplicationWindow {
         ContextMenu.MenuRow {
             visible: win.contextKind === "item"
             icon: "undo"
-            label: "Deshacer"
+            label: qsTr("Undo")
             enabled: Browser.canUndo
             onClicked: Browser.undo()
         }
         ContextMenu.MenuRow {
             visible: win.contextKind === "item"
             icon: "open_in_new"
-            label: Browser.selectionIsDir ? "Abrir" : "Abrir"
+            label: Browser.selectionIsDir ? qsTr("Open") : qsTr("Open")
             enabled: Browser.selectionCount === 1
             onClicked: {
                 if (!Browser.selectedPaths.length)
@@ -1400,7 +1400,7 @@ ApplicationWindow {
         ContextMenu.MenuRow {
             visible: win.contextKind === "item" && !Browser.selectionIsDir
             icon: "apps"
-            label: "Abrir con…"
+            label: qsTr("Open with")
             enabled: Browser.selectionCount === 1
             onClicked: {
                 if (Browser.selectedPaths.length)
@@ -1413,35 +1413,35 @@ ApplicationWindow {
         ContextMenu.MenuRow {
             visible: win.contextKind === "item"
             icon: "content_copy"
-            label: "Copiar"
+            label: qsTr("Copy")
             enabled: Browser.selectionCount > 0
             onClicked: Browser.copySelection()
         }
         ContextMenu.MenuRow {
             visible: win.contextKind === "item"
             icon: "content_cut"
-            label: "Cortar"
+            label: qsTr("Cut")
             enabled: Browser.selectionCount > 0
             onClicked: Browser.cutSelection()
         }
         ContextMenu.MenuRow {
             visible: win.contextKind === "item"
             icon: "content_paste"
-            label: "Pegar"
+            label: qsTr("Paste")
             enabled: Browser.hasClipboard
             onClicked: Browser.paste()
         }
         ContextMenu.MenuRow {
             visible: win.contextKind === "item"
             icon: "control_point_duplicate"
-            label: "Duplicar"
+            label: qsTr("Duplicate")
             enabled: Browser.selectionCount === 1
             onClicked: Browser.duplicateSelection()
         }
         ContextMenu.MenuRow {
             visible: win.contextKind === "item" && Archive.available
             icon: "folder_zip"
-            label: "Comprimir en ZIP"
+            label: qsTr("Compress to ZIP")
             enabled: Browser.selectionCount > 0 && !Archive.busy
             onClicked: Archive.compress(Browser.selectedPaths)
         }
@@ -1449,21 +1449,21 @@ ApplicationWindow {
             visible: win.contextKind === "item" && Browser.selectionCount === 1
                      && Browser.selectedPaths.length > 0 && Archive.canExtract(Browser.selectedPaths[0])
             icon: "unarchive"
-            label: "Extraer aquí"
+            label: qsTr("Extract here")
             enabled: !Archive.busy
             onClicked: Archive.extractHere(Browser.selectedPaths[0])
         }
         ContextMenu.MenuRow {
             visible: win.contextKind === "item"
             icon: "drive_file_rename_outline"
-            label: "Renombrar"
+            label: qsTr("Rename")
             enabled: Browser.selectionCount === 1
             onClicked: win.beginRename()
         }
         ContextMenu.MenuRow {
             visible: win.contextKind === "item" && Browser.selectionIsDir
             icon: "category"
-            label: "Cambiar icono…"
+            label: qsTr("Change icon")
             enabled: Browser.selectionCount === 1
             onClicked: {
                 if (Browser.selectedPaths.length)
@@ -1479,7 +1479,7 @@ ApplicationWindow {
             icon: Browser.selectedPaths.length && Browser.isPinned(Browser.selectedPaths[0])
                   ? "bookmark_remove" : "bookmark_add"
             label: Browser.selectedPaths.length && Browser.isPinned(Browser.selectedPaths[0])
-                   ? "Quitar de la barra lateral" : "Añadir a la barra lateral"
+                   ? qsTr("Remove from the sidebar") : qsTr("Add to the sidebar")
             onClicked: {
                 if (!Browser.selectedPaths.length)
                     return
@@ -1495,7 +1495,7 @@ ApplicationWindow {
         ContextMenu.MenuRow {
             visible: win.contextKind === "place"
             icon: "bookmark_remove"
-            label: "Quitar de la barra lateral"
+            label: qsTr("Remove from the sidebar")
             enabled: win.placeContextPath.length > 0
             onClicked: {
                 if (win.placeContextPath.length)
@@ -1508,14 +1508,14 @@ ApplicationWindow {
         ContextMenu.MenuRow {
             visible: win.contextKind === "item"
             icon: "info"
-            label: "Detalles"
+            label: qsTr("Details")
             enabled: Browser.selectionCount > 0
             onClicked: Properties.openPaths(Browser.selectedPaths)
         }
         ContextMenu.MenuRow {
             visible: win.contextKind === "item"
             icon: "delete"
-            label: Browser.inTrash ? "Eliminar definitivamente" : "Mover a la papelera"
+            label: Browser.inTrash ? qsTr("Delete permanently") : qsTr("Move to the trash")
             dangerous: true
             enabled: Browser.selectionCount > 0
             onClicked: Browser.trashSelection()
@@ -1539,7 +1539,7 @@ ApplicationWindow {
     Connections {
         target: Archive
         function onFinished(ok, message, resultPath) {
-            taskToast.show(message, !ok && message !== "Cancelado")
+            taskToast.show(message, !ok && message !== qsTr("Cancelled"))
         }
     }
 
@@ -1603,7 +1603,7 @@ ApplicationWindow {
                 spacing: 10
 
                 StyledText {
-                    text: "¿Vaciar la papelera?"
+                    text: qsTr("Empty the trash?")
                     color: Theme.onSurface
                     font.pixelSize: 16
                     font.weight: Font.Medium
@@ -1611,9 +1611,10 @@ ApplicationWindow {
                 StyledText {
                     Layout.fillWidth: true
                     text: Browser.trashStatsBusy && Browser.trashSize === 0
-                          ? "Se eliminarán definitivamente todos los elementos. Esta acción no se puede deshacer."
-                          : "Se eliminarán definitivamente " + (Browser.trashCount === 1 ? "1 elemento" : Browser.trashCount + " elementos")
-                            + " (" + Browser.formatSize(Browser.trashSize) + "). Esta acción no se puede deshacer."
+                          ? qsTr("All the items will be deleted permanently. This cannot be undone.")
+                          : qsTr("%1 (%2) will be deleted permanently. This cannot be undone.")
+                                .arg(Browser.trashCount === 1 ? qsTr("1 item") : qsTr("%1 items").arg(Browser.trashCount))
+                                .arg(Browser.formatSize(Browser.trashSize))
                     color: Theme.onSurfaceVariant
                     font.pixelSize: 13
                     wrapMode: Text.Wrap
@@ -1634,7 +1635,7 @@ ApplicationWindow {
                         StyledText {
                             id: confirmEmptyLabel
                             anchors.centerIn: parent
-                            text: "Vaciar"
+                            text: qsTr("Empty")
                             color: Theme.onError
                             font.pixelSize: 14
                             font.weight: Font.Medium
@@ -1703,7 +1704,7 @@ ApplicationWindow {
                 spacing: 12
 
                 StyledText {
-                    text: win.nameDialogMode === "create" ? "Nueva carpeta" : "Renombrar"
+                    text: win.nameDialogMode === "create" ? qsTr("New folder") : qsTr("Rename")
                     color: Theme.onSurface
                     font.pixelSize: 16
                     font.weight: Font.Medium

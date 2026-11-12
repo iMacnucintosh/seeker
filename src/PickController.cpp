@@ -1,4 +1,6 @@
 #include "PickController.h"
+
+#include <QCoreApplication>
 #include "BrowserController.h"
 
 #include <QFile>
@@ -19,11 +21,11 @@ QString localizeAcceptLabel(QString label) {
     const QString lower = label.toLower();
     if (label.isEmpty() || lower == QLatin1String("select") || lower == QLatin1String("open")
         || lower == QLatin1String("choose") || lower == QLatin1String("ok"))
-        return QStringLiteral("Seleccionar");
+        return QCoreApplication::translate("Seeker", "Select");
     if (lower == QLatin1String("save") || lower == QLatin1String("save as"))
-        return QStringLiteral("Guardar");
+        return QCoreApplication::translate("Seeker", "Save");
     if (lower == QLatin1String("cancel"))
-        return QStringLiteral("Cancelar");
+        return QCoreApplication::translate("Seeker", "Cancel");
     return label;
 }
 
@@ -33,23 +35,23 @@ QString localizePickTitle(QString title) {
         title.remove(0, 1);
     const QString lower = title.toLower();
     if (title.isEmpty())
-        return QStringLiteral("Seleccionar");
+        return QCoreApplication::translate("Seeker", "Select");
     if (lower == QLatin1String("select a file") || lower == QLatin1String("open file")
         || lower == QLatin1String("open files"))
-        return QStringLiteral("Seleccionar archivo");
+        return QCoreApplication::translate("Seeker", "Select file");
     if (lower == QLatin1String("select a folder") || lower == QLatin1String("select folder")
         || lower == QLatin1String("open folder"))
-        return QStringLiteral("Seleccionar carpeta");
+        return QCoreApplication::translate("Seeker", "Select folder");
     if (lower == QLatin1String("select an image") || lower == QLatin1String("select image"))
-        return QStringLiteral("Seleccionar imagen");
+        return QCoreApplication::translate("Seeker", "Select image");
     if (lower == QLatin1String("select a wallpaper") || lower == QLatin1String("choose wallpaper"))
-        return QStringLiteral("Seleccionar fondo");
+        return QCoreApplication::translate("Seeker", "Select wallpaper");
     if (lower == QLatin1String("choose icon") || lower == QLatin1String("select icon"))
-        return QStringLiteral("Elegir icono");
+        return QCoreApplication::translate("Seeker", "Choose icon");
     if (lower == QLatin1String("select a profile picture"))
-        return QStringLiteral("Seleccionar foto de perfil");
+        return QCoreApplication::translate("Seeker", "Select profile picture");
     if (lower == QLatin1String("save file") || lower == QLatin1String("save as"))
-        return QStringLiteral("Guardar archivo");
+        return QCoreApplication::translate("Seeker", "Save file");
     return title;
 }
 

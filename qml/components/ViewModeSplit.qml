@@ -150,10 +150,13 @@ Item {
             }
         }
 
+        // Opaque like the other popups (Theme.popup): the translucent container let the files behind show through
         Rectangle {
             anchors.fill: parent
             radius: 16
-            color: Theme.surfaceContainerHigh
+            color: Theme.popup
+            border.width: 1
+            border.color: Theme.outlineVariant
         }
 
         Column {
@@ -219,9 +222,9 @@ Item {
                 }
             }
 
-            ModeRow { modeId: "grid"; label: "Cuadrícula"; iconName: "grid_view" }
-            ModeRow { modeId: "list"; label: "Lista"; iconName: "view_list" }
-            ModeRow { modeId: "details"; label: "Detalles"; iconName: "view_column" }
+            ModeRow { modeId: "grid"; label: qsTr("Grid"); iconName: "grid_view" }
+            ModeRow { modeId: "list"; label: qsTr("List"); iconName: "view_list" }
+            ModeRow { modeId: "details"; label: qsTr("Details"); iconName: "view_column" }
         }
     }
 }
