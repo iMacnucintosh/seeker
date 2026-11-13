@@ -37,8 +37,6 @@ ApplicationWindow {
     // empty | item | place (pinned sidebar row)
     property string contextKind: "empty"
     property string placeContextPath: ""
-    // rename | create
-    property string nameDialogMode: "rename"
     readonly property bool dialogOpen: nameDialog.open || ctxMenu.open || iconPicker.open || emptyTrashDialog.open || Properties.open || OpenWith.open
     /// Folder path under the drag cursor (view DropAreas inside Grid/List often miss DnD).
     property string dropTargetPath: ""
@@ -144,42 +142,15 @@ ApplicationWindow {
 
     function beginRename() {
         dismissMenus()
-        if (Browser.selectionCount !== 1)
-            return
         const paths = Browser.selectedPaths
-        if (!paths.length)
+        if (Browser.selectionCount !== 1 || !paths.length)
             return
-        nameDialogMode = "rename"
-        nameField.text = paths[0].split("/").pop()
-        nameDialog.open = true
-        Qt.callLater(() => {
-            nameField.forceActiveFocus()
-            nameField.selectAll()
-        })
+        nameDialog.begin("rename", paths[0].split("/").pop())
     }
 
     function beginCreateFolder() {
         dismissMenus()
-        nameDialogMode = "create"
-        nameField.text = "Carpeta nueva"
-        nameDialog.open = true
-        Qt.callLater(() => {
-            nameField.forceActiveFocus()
-            nameField.selectAll()
-        })
-    }
-
-    function confirmNameDialog() {
-        const name = nameField.text.trim()
-        if (!name.length)
-            return
-        if (nameDialogMode === "create")
-            Browser.createFolder(name)
-        else
-            Browser.renameSelected(name)
-        nameDialog.open = false
-        if (win.contentItem)
-            win.contentItem.forceActiveFocus()
+        nameDialog.begin("create", qsTr("New folder"))
     }
 
     /// Double-click / Abrir carpeta: zoom-out of current view, then settle into the new one.
@@ -1555,218 +1526,31 @@ ApplicationWindow {
         id: openWithDialog
     }
 
-    // Confirm permanent empty-trash.
-    Item {
+    EmptyTrashDialog {
         id: emptyTrashDialog
-        property bool open: false
-        property real progress: open ? 1 : 0
-        anchors.fill: parent
-        visible: progress > 0.01
-        z: 105
+    }
 
-        Behavior on progress {
-            NumberAnimation {
-                duration: emptyTrashDialog.open ? 220 : 150
-                easing.type: emptyTrashDialog.open ? Easing.OutBack : Easing.InCubic
-                easing.overshoot: 1.12
-            }
-        }
-
-        Rectangle {
-            anchors.fill: parent
-            color: "#000000"
-            opacity: emptyTrashDialog.progress * 0.45
-        }
-        MouseArea {
-            anchors.fill: parent
-            enabled: emptyTrashDialog.open
-            onClicked: emptyTrashDialog.open = false
-        }
-
-        Rectangle {
-            anchors.centerIn: parent
-            anchors.verticalCenterOffset: (1 - emptyTrashDialog.progress) * 16
-            width: 360
-            height: 188
-            radius: 20
-            color: Theme.popup
-            border.width: 1
-            border.color: Theme.outlineVariant
-            opacity: emptyTrashDialog.progress
-            scale: 0.94 + emptyTrashDialog.progress * 0.06
-
-            MouseArea { anchors.fill: parent; z: -1; onClicked: {} }
-
-            ColumnLayout {
-                anchors.fill: parent
-                anchors.margins: 20
-                spacing: 10
-
-                StyledText {
-                    text: qsTr("Empty the trash?")
-                    color: Theme.onSurface
-                    font.pixelSize: 16
-                    font.weight: Font.Medium
-                }
-                StyledText {
-                    Layout.fillWidth: true
-                    text: Browser.trashStatsBusy && Browser.trashSize === 0
-                          ? qsTr("All the items will be deleted permanently. This cannot be undone.")
-                          : qsTr("%1 (%2) will be deleted permanently. This cannot be undone.")
-                                .arg(Browser.trashCount === 1 ? qsTr("1 item") : qsTr("%1 items").arg(Browser.trashCount))
-                                .arg(Browser.formatSize(Browser.trashSize))
-                    color: Theme.onSurfaceVariant
-                    font.pixelSize: 13
-                    wrapMode: Text.Wrap
-                }
-                Item { Layout.fillHeight: true }
-                RowLayout {
-                    Layout.alignment: Qt.AlignRight
-                    spacing: 8
-                    IconButton {
-                        icon: "close"
-                        onClicked: emptyTrashDialog.open = false
-                    }
-                    Rectangle {
-                        width: confirmEmptyLabel.implicitWidth + 28
-                        height: 40
-                        radius: 20
-                        color: Theme.error
-                        StyledText {
-                            id: confirmEmptyLabel
-                            anchors.centerIn: parent
-                            text: qsTr("Empty")
-                            color: Theme.onError
-                            font.pixelSize: 14
-                            font.weight: Font.Medium
-                        }
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: {
-                                emptyTrashDialog.open = false
-                                Browser.emptyTrash()
-                            }
-                        }
-                    }
-                }
-            }
+    // Development (SEEKER_SHOT_OPEN, see main.cpp): a dialog open for the screenshot, on the first item of the folder
+    Timer {
+        running: DevShotOpen.length > 0
+        interval: 900
+        onTriggered: {
+            const first = Browser.pathAt(0)
+            if (DevShotOpen === "name")
+                nameDialog.begin("create", qsTr("New folder"))
+            else if (DevShotOpen === "trash")
+                emptyTrashDialog.open = true
+            else if (DevShotOpen === "icon")
+                iconPicker.begin(first)
+            else if (DevShotOpen === "properties")
+                Properties.openPaths([first])
+            else if (DevShotOpen === "openwith")
+                OpenWith.openPath(Browser.pathAt(4))
         }
     }
 
-    // Name dialog — rename existing OR create folder (only mkdir on confirm).
-    Item {
+    NameDialog {
         id: nameDialog
-        property bool open: false
-        property real progress: open ? 1 : 0
-        anchors.fill: parent
-        visible: progress > 0.01
-        z: 100
-
-        Behavior on progress {
-            NumberAnimation {
-                duration: nameDialog.open ? 240 : 160
-                easing.type: nameDialog.open ? Easing.OutBack : Easing.InCubic
-                easing.overshoot: 1.15
-            }
-        }
-
-        // Scrim
-        Rectangle {
-            anchors.fill: parent
-            color: "#000000"
-            opacity: nameDialog.progress * 0.45
-        }
-
-        MouseArea {
-            anchors.fill: parent
-            enabled: nameDialog.open
-            onClicked: nameDialog.open = false
-        }
-
-        Rectangle {
-            id: nameCard
-            anchors.centerIn: parent
-            anchors.verticalCenterOffset: (1 - nameDialog.progress) * 18
-            width: 360
-            height: 160
-            radius: 20
-            color: Theme.popup
-            border.width: 1
-            border.color: Theme.outlineVariant
-            opacity: nameDialog.progress
-            scale: 0.92 + nameDialog.progress * 0.08
-            transformOrigin: Item.Center
-
-            ColumnLayout {
-                anchors.fill: parent
-                anchors.margins: 20
-                spacing: 12
-
-                StyledText {
-                    text: win.nameDialogMode === "create" ? qsTr("New folder") : qsTr("Rename")
-                    color: Theme.onSurface
-                    font.pixelSize: 16
-                    font.weight: Font.Medium
-                }
-
-                TextField {
-                    id: nameField
-                    Layout.fillWidth: true
-                    color: Theme.onSurface
-                    selectedTextColor: Theme.onPrimary
-                    selectionColor: Theme.primary
-                    font.family: Theme.uiFamily
-                    font.pixelSize: 14
-                    background: Rectangle {
-                        radius: 12
-                        color: Theme.surfaceContainerHighest
-                    }
-                    leftPadding: 12
-                    rightPadding: 12
-                    topPadding: 10
-                    bottomPadding: 10
-                    Keys.onReturnPressed: win.confirmNameDialog()
-                    Keys.onEnterPressed: win.confirmNameDialog()
-                    Keys.onEscapePressed: nameDialog.open = false
-                }
-
-                RowLayout {
-                    Layout.alignment: Qt.AlignRight
-                    spacing: 8
-
-                    IconButton {
-                        icon: "close"
-                        onClicked: nameDialog.open = false
-                    }
-                    Rectangle {
-                        width: 40
-                        height: 40
-                        radius: 20
-                        color: Theme.primary
-                        opacity: nameField.text.trim().length ? 1 : 0.38
-                        MaterialIcon {
-                            anchors.centerIn: parent
-                            icon: win.nameDialogMode === "create" ? "add" : "check"
-                            size: 22
-                            colour: Theme.onPrimary
-                        }
-                        MouseArea {
-                            anchors.fill: parent
-                            enabled: nameField.text.trim().length > 0
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: win.confirmNameDialog()
-                        }
-                    }
-                }
-            }
-
-            MouseArea {
-                anchors.fill: parent
-                z: -1
-                onClicked: {}
-            }
-        }
     }
 
     readonly property bool navEnabled: !nameDialog.open && !iconPicker.open && !emptyTrashDialog.open && !Properties.open && !OpenWith.open && !pathBar.editing && !ctxMenu.open

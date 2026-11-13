@@ -2,6 +2,9 @@
     <qresource prefix="/">
         <file>qml/Main.qml</file>
         <file>qml/components/IconButton.qml</file>
+        <file>qml/components/NameDialog.qml</file>
+        <file>qml/components/EmptyTrashDialog.qml</file>
+        <file>qml/components/ModalLayer.qml</file>
         <file>qml/components/SidePlace.qml</file>
         <file>qml/components/PlacesRail.qml</file>
         <file>qml/components/BloomMenu.qml</file>

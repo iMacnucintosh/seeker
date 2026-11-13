@@ -2,40 +2,16 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
-Item {
+ModalLayer {
     id: root
-    anchors.fill: parent
-    visible: progress > 0.01
     z: 106
 
-    readonly property bool open: OpenWith.open
-    property real progress: open ? 1 : 0
-    /// Double-click that opens us would also hit the scrim and dismiss instantly.
-    property bool scrimArmed: false
+    open: OpenWith.open
+    // The double click that opens it would also hit the dimmed area and close it at once
+    armDelay: 280
 
-    Behavior on progress {
-        NumberAnimation {
-            duration: root.open ? 240 : 160
-            easing.type: root.open ? Easing.OutBack : Easing.InCubic
-            easing.overshoot: 1.12
-        }
-    }
 
-    onOpenChanged: {
-        scrimArmTimer.stop()
-        if (open) {
-            scrimArmed = false
-            scrimArmTimer.start()
-        } else {
-            scrimArmed = false
-        }
-    }
-
-    Timer {
-        id: scrimArmTimer
-        interval: 280
-        onTriggered: root.scrimArmed = true
-    }
+    onCloseRequested: root.close()
 
     function close() {
         OpenWith.close()
@@ -51,17 +27,7 @@ Item {
             win.contentItem.forceActiveFocus()
     }
 
-    Rectangle {
-        anchors.fill: parent
-        color: "#000000"
-        opacity: root.progress * 0.45
-    }
 
-    MouseArea {
-        anchors.fill: parent
-        enabled: root.open && root.scrimArmed
-        onClicked: root.close()
-    }
 
     Rectangle {
         id: card

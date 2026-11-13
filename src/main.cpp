@@ -217,6 +217,8 @@ int main(int argc, char *argv[]) {
     engine.rootContext()->setContextProperty(QStringLiteral("Pick"), &pick);
     engine.rootContext()->setContextProperty(QStringLiteral("Properties"), &properties);
     engine.rootContext()->setContextProperty(QStringLiteral("OpenWith"), &openWith);
+    // Development: with SEEKER_SHOT, SEEKER_SHOT_OPEN names a dialog to open before the screenshot (Main.qml)
+    engine.rootContext()->setContextProperty(QStringLiteral("DevShotOpen"), qEnvironmentVariable("SEEKER_SHOT_OPEN"));
     engine.load(QUrl(QStringLiteral("qrc:/qml/Main.qml")));
     if (engine.rootObjects().isEmpty())
         return 1;
