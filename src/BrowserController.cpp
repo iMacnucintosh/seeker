@@ -535,10 +535,6 @@ QVariantList BrowserController::pathSuggestions(const QString &typed, int maxCou
     return out;
 }
 
-void BrowserController::toggleViewMode() {
-    cycleViewMode(1);
-}
-
 void BrowserController::cycleViewMode(int delta) {
     static const QStringList kModes = {
         QStringLiteral("grid"),
@@ -553,15 +549,6 @@ void BrowserController::cycleViewMode(int delta) {
     if (step < 0)
         step += n;
     setViewMode(kModes.at((i + step) % n));
-}
-
-QString BrowserController::viewModeLabel(const QString &mode) const {
-    const QString m = mode.trimmed().isEmpty() ? m_viewMode : mode.trimmed().toLower();
-    if (m == QLatin1String("list"))
-        return QCoreApplication::translate("Seeker", "List");
-    if (m == QLatin1String("details"))
-        return QCoreApplication::translate("Seeker", "Details");
-    return QCoreApplication::translate("Seeker", "Grid");
 }
 
 QString BrowserController::viewModeIcon(const QString &mode) const {
@@ -1230,11 +1217,6 @@ QString BrowserController::pathAt(int index) const {
     if (!m_model || index < 0 || index >= m_model->rowCount())
         return {};
     return m_model->data(m_model->index(index, 0), DirModel::PathRole).toString();
-}
-
-bool BrowserController::pathIsDir(const QString &path) const {
-    const QString local = ensureLocal(path);
-    return !local.isEmpty() && QFileInfo(local).isDir();
 }
 
 void BrowserController::selectIndex(int index) {

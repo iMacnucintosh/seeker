@@ -116,10 +116,8 @@ public:
     Q_INVOKABLE void clearSelection();
     Q_INVOKABLE QString createFolder(const QString &preferredName = {});
     Q_INVOKABLE QString duplicateSelection();
-    Q_INVOKABLE void toggleViewMode();
     /// delta +1 / -1 cycles grid → list → details.
     Q_INVOKABLE void cycleViewMode(int delta = 1);
-    Q_INVOKABLE QString viewModeLabel(const QString &mode = {}) const;
     Q_INVOKABLE QString viewModeIcon(const QString &mode = {}) const;
     Q_INVOKABLE QString formatSize(qint64 bytes) const;
     Q_INVOKABLE void undo();
@@ -152,7 +150,6 @@ public:
     Q_INVOKABLE QString uniqueNameIn(const QString &dir, const QString &baseName) const;
     Q_INVOKABLE int currentIndex() const;
     Q_INVOKABLE QString pathAt(int index) const;
-    Q_INVOKABLE bool pathIsDir(const QString &path) const;
     Q_INVOKABLE void selectIndex(int index);
     Q_INVOKABLE void moveSelection(int delta);
     Q_INVOKABLE void openSelection();

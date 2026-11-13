@@ -16,8 +16,7 @@ public:
     explicit Trash(QObject *parent = nullptr);
 
     Q_INVOKABLE QString trashPath() const;
-    Q_INVOKABLE bool moveToTrash(const QStringList &paths);
-    /// Same as moveToTrash but returns per-item locations for undo/restore.
+    /// Moves to the trash and returns where each item went (for undo/restore).
     QVector<TrashEntry> moveToTrashEntries(const QStringList &paths);
     bool restore(const QString &trashFilePath, const QString &originalPath) const;
     Q_INVOKABLE bool emptyTrash();

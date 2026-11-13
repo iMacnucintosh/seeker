@@ -42,8 +42,21 @@ Text {
     maximumLineCount: Math.max(1, lineBudget)
     clip: true
 
-    text: {
-        const _w = width
+    text: ""
+
+    onWidthChanged: relayout()
+    onFileNameChanged: relayout()
+    onLineBudgetChanged: relayout()
+    onSizePxChanged: relayout()
+    onFontChanged: relayout()
+    Component.onCompleted: relayout()
+
+    function relayout() {
+        text = shownText()
+    }
+
+    // Worked out imperatively: as a binding it wrote the TextMetrics it then read (a binding loop on text)
+    function shownText() {
         if (!fileName.length)
             return ""
         if (width < 8)

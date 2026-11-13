@@ -1,7 +1,6 @@
 <RCC>
     <qresource prefix="/">
         <file>qml/Main.qml</file>
-        <file>qml/components/ToolIcon.qml</file>
         <file>qml/components/IconButton.qml</file>
         <file>qml/components/SidePlace.qml</file>
         <file>qml/components/PlacesRail.qml</file>
