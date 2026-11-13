@@ -29,6 +29,7 @@
 #include <QCommandLineParser>
 #include <QQuickStyle>
 #include <QQuickWindow>
+#include <QTimer>
 #include <cstring>
 
 namespace {
@@ -219,6 +220,18 @@ int main(int argc, char *argv[]) {
     engine.load(QUrl(QStringLiteral("qrc:/qml/Main.qml")));
     if (engine.rootObjects().isEmpty())
         return 1;
+
+    // Development: SEEKER_SHOT=<file.png> saves the window after SEEKER_SHOT_DELAY ms (2500) and quits, for checking
+    // the UI headless (QT_QPA_PLATFORM=offscreen, with its own XDG_CONFIG_HOME so no setting is touched)
+    if (const QString shot = qEnvironmentVariable("SEEKER_SHOT"); !shot.isEmpty()) {
+        auto *window = qobject_cast<QQuickWindow *>(engine.rootObjects().constFirst());
+        const int delay = qEnvironmentVariableIsSet("SEEKER_SHOT_DELAY") ? qEnvironmentVariableIntValue("SEEKER_SHOT_DELAY") : 2500;
+        QTimer::singleShot(delay, &app, [window, shot] {
+            if (window)
+                window->grabWindow().save(shot);
+            QGuiApplication::quit();
+        });
+    }
 
     QObject::connect(&pick, &PickController::finished, &app, &QGuiApplication::quit);
     // System sounds (on by default, switchable from the ⋮ menu).
