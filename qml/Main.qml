@@ -1303,194 +1303,10 @@ ApplicationWindow {
         }
     }
 
-    ContextMenu {
+    FileContextMenu {
         id: ctxMenu
-
-        // —— empty background ——
-        ContextMenu.MenuRow {
-            visible: win.contextKind === "empty"
-            icon: "undo"
-            label: qsTr("Undo")
-            enabled: Browser.canUndo
-            onClicked: Browser.undo()
-        }
-        ContextMenu.MenuRow {
-            visible: win.contextKind === "empty"
-            icon: "create_new_folder"
-            label: qsTr("New folder")
-            onClicked: win.beginCreateFolder()
-        }
-        ContextMenu.MenuRow {
-            visible: win.contextKind === "empty"
-            icon: "terminal"
-            label: qsTr("Open terminal here")
-            onClicked: Browser.openTerminalHere()
-        }
-        ContextMenu.MenuRow {
-            visible: win.contextKind === "empty"
-            icon: "content_paste"
-            label: qsTr("Paste")
-            enabled: Browser.hasClipboard
-            onClicked: Browser.paste()
-        }
-        ContextMenu.MenuRow {
-            visible: win.contextKind === "empty"
-            icon: "select_all"
-            label: qsTr("Select all")
-            onClicked: Browser.selectAll()
-        }
-        ContextMenu.MenuRow {
-            visible: win.contextKind === "empty"
-            icon: "refresh"
-            label: qsTr("Refresh")
-            onClicked: Browser.refresh()
-        }
-
-        // —— selection ——
-        ContextMenu.MenuRow {
-            visible: win.contextKind === "item"
-            icon: "undo"
-            label: qsTr("Undo")
-            enabled: Browser.canUndo
-            onClicked: Browser.undo()
-        }
-        ContextMenu.MenuRow {
-            visible: win.contextKind === "item"
-            icon: "open_in_new"
-            label: Browser.selectionIsDir ? qsTr("Open") : qsTr("Open")
-            enabled: Browser.selectionCount === 1
-            onClicked: {
-                if (!Browser.selectedPaths.length)
-                    return
-                if (Browser.selectionIsDir)
-                    win.enterFolder(Browser.selectedPaths[0])
-                else
-                    Browser.openPath(Browser.selectedPaths[0])
-            }
-        }
-        ContextMenu.MenuRow {
-            visible: win.contextKind === "item" && !Browser.selectionIsDir
-            icon: "apps"
-            label: qsTr("Open with")
-            enabled: Browser.selectionCount === 1
-            onClicked: {
-                if (Browser.selectedPaths.length)
-                    OpenWith.openPath(Browser.selectedPaths[0])
-            }
-        }
-        ContextMenu.Separator {
-            visible: win.contextKind === "item"
-        }
-        ContextMenu.MenuRow {
-            visible: win.contextKind === "item"
-            icon: "content_copy"
-            label: qsTr("Copy")
-            enabled: Browser.selectionCount > 0
-            onClicked: Browser.copySelection()
-        }
-        ContextMenu.MenuRow {
-            visible: win.contextKind === "item"
-            icon: "content_cut"
-            label: qsTr("Cut")
-            enabled: Browser.selectionCount > 0
-            onClicked: Browser.cutSelection()
-        }
-        ContextMenu.MenuRow {
-            visible: win.contextKind === "item"
-            icon: "content_paste"
-            label: qsTr("Paste")
-            enabled: Browser.hasClipboard
-            onClicked: Browser.paste()
-        }
-        ContextMenu.MenuRow {
-            visible: win.contextKind === "item"
-            icon: "control_point_duplicate"
-            label: qsTr("Duplicate")
-            enabled: Browser.selectionCount === 1
-            onClicked: Browser.duplicateSelection()
-        }
-        ContextMenu.MenuRow {
-            visible: win.contextKind === "item" && Archive.available
-            icon: "folder_zip"
-            label: qsTr("Compress to ZIP")
-            enabled: Browser.selectionCount > 0 && !Archive.busy
-            onClicked: Archive.compress(Browser.selectedPaths)
-        }
-        ContextMenu.MenuRow {
-            visible: win.contextKind === "item" && Browser.selectionCount === 1
-                     && Browser.selectedPaths.length > 0 && Archive.canExtract(Browser.selectedPaths[0])
-            icon: "unarchive"
-            label: qsTr("Extract here")
-            enabled: !Archive.busy
-            onClicked: Archive.extractHere(Browser.selectedPaths[0])
-        }
-        ContextMenu.MenuRow {
-            visible: win.contextKind === "item"
-            icon: "drive_file_rename_outline"
-            label: qsTr("Rename")
-            enabled: Browser.selectionCount === 1
-            onClicked: win.beginRename()
-        }
-        ContextMenu.MenuRow {
-            visible: win.contextKind === "item" && Browser.selectionIsDir
-            icon: "category"
-            label: qsTr("Change icon")
-            enabled: Browser.selectionCount === 1
-            onClicked: {
-                if (Browser.selectedPaths.length)
-                    iconPicker.begin(Browser.selectedPaths[0])
-            }
-        }
-        ContextMenu.MenuRow {
-            visible: win.contextKind === "item"
-                     && Browser.selectionIsDir
-                     && Browser.selectionCount === 1
-                     && Browser.selectedPaths.length
-                     && !Browser.isBuiltinPlace(Browser.selectedPaths[0])
-            icon: Browser.selectedPaths.length && Browser.isPinned(Browser.selectedPaths[0])
-                  ? "bookmark_remove" : "bookmark_add"
-            label: Browser.selectedPaths.length && Browser.isPinned(Browser.selectedPaths[0])
-                   ? qsTr("Remove from the sidebar") : qsTr("Add to the sidebar")
-            onClicked: {
-                if (!Browser.selectedPaths.length)
-                    return
-                const p = Browser.selectedPaths[0]
-                if (Browser.isPinned(p))
-                    Browser.unpinPlace(p)
-                else
-                    Browser.pinPlace(p)
-            }
-        }
-
-        // —— pinned sidebar place ——
-        ContextMenu.MenuRow {
-            visible: win.contextKind === "place"
-            icon: "bookmark_remove"
-            label: qsTr("Remove from the sidebar")
-            enabled: win.placeContextPath.length > 0
-            onClicked: {
-                if (win.placeContextPath.length)
-                    Browser.unpinPlace(win.placeContextPath)
-            }
-        }
-        ContextMenu.Separator {
-            visible: win.contextKind === "item"
-        }
-        ContextMenu.MenuRow {
-            visible: win.contextKind === "item"
-            icon: "info"
-            label: qsTr("Details")
-            enabled: Browser.selectionCount > 0
-            onClicked: Properties.openPaths(Browser.selectedPaths)
-        }
-        ContextMenu.MenuRow {
-            visible: win.contextKind === "item"
-            icon: "delete"
-            label: Browser.inTrash ? qsTr("Delete permanently") : qsTr("Move to the trash")
-            dangerous: true
-            enabled: Browser.selectionCount > 0
-            onClicked: Browser.trashSelection()
-        }
+        win: win
+        iconPicker: iconPicker
     }
 
     TaskToast {
@@ -1546,6 +1362,12 @@ ApplicationWindow {
                 Properties.openPaths([first])
             else if (DevShotOpen === "openwith")
                 OpenWith.openPath(Browser.pathAt(4))
+            else if (DevShotOpen === "menu")
+                win.showEmptyContext(500, 300)
+            else if (DevShotOpen === "itemmenu") {
+                Browser.selectIndex(4)
+                win.showItemContext(500, 200)
+            }
         }
     }
 
@@ -1555,125 +1377,13 @@ ApplicationWindow {
 
     readonly property bool navEnabled: !nameDialog.open && !iconPicker.open && !emptyTrashDialog.open && !Properties.open && !OpenWith.open && !pathBar.editing && !ctxMenu.open
 
-    Shortcut {
-        enabled: win.navEnabled
-        sequences: ["Up"]
-        onActivated: win.moveSelectionByKey(Qt.Key_Up)
-    }
-    Shortcut {
-        enabled: win.navEnabled
-        sequences: ["Down"]
-        onActivated: win.moveSelectionByKey(Qt.Key_Down)
-    }
-    Shortcut {
-        enabled: win.navEnabled
-        sequences: ["Left"]
-        onActivated: win.moveSelectionByKey(Qt.Key_Left)
-    }
-    Shortcut {
-        enabled: win.navEnabled
-        sequences: ["Right"]
-        onActivated: win.moveSelectionByKey(Qt.Key_Right)
-    }
-    Shortcut {
-        enabled: win.navEnabled
-        sequences: ["Home"]
-        onActivated: {
-            Browser.selectIndex(0)
-            win.ensureSelectionVisible()
-        }
-    }
-    Shortcut {
-        enabled: win.navEnabled
-        sequences: ["End"]
-        onActivated: {
-            Browser.selectIndex(Math.max(0, Browser.model.count - 1))
-            win.ensureSelectionVisible()
-        }
-    }
+    readonly property bool nameDialogOpen: nameDialog.open
+    readonly property bool addressEditing: pathBar.editing
 
-    // Ctrl+Z / Delete: also handled in C++ ShellKeyFilter — QML Shortcut flakes on Wayland.
-    Shortcut {
-        enabled: !nameDialog.open && !iconPicker.open
-        sequences: [StandardKey.Copy]
-        onActivated: Browser.copySelection()
-    }
-    Shortcut {
-        enabled: !nameDialog.open && !iconPicker.open
-        sequences: [StandardKey.Cut]
-        onActivated: Browser.cutSelection()
-    }
-    Shortcut {
-        enabled: !nameDialog.open && !iconPicker.open
-        sequences: [StandardKey.Paste]
-        onActivated: Browser.paste()
-    }
-    Shortcut {
-        enabled: !nameDialog.open && !iconPicker.open
-        sequences: [StandardKey.SelectAll]
-        onActivated: Browser.selectAll()
-    }
-    Shortcut {
-        // Backup; ShellKeyFilter is the reliable path on Wayland.
-        enabled: !nameDialog.open && !iconPicker.open && !pathBar.editing
-        context: Qt.ApplicationShortcut
-        sequences: [StandardKey.Delete, "Delete"]
-        onActivated: {
-            if (Browser.selectionCount > 0)
-                Browser.trashSelection()
-        }
-    }
-    Shortcut {
-        enabled: !nameDialog.open && !win.navBusy
-        sequences: ["Backspace"]
-        onActivated: win.softNavigate(() => Browser.goUp())
-    }
-    Shortcut {
-        enabled: !nameDialog.open
-        sequences: ["F2"]
-        onActivated: win.beginRename()
-    }
-    Shortcut {
-        enabled: !nameDialog.open
-        sequences: ["Ctrl+Shift+N"]
-        onActivated: win.beginCreateFolder()
-    }
-    Shortcut {
-        enabled: !nameDialog.open
-        sequences: ["Ctrl+D"]
-        onActivated: Browser.duplicateSelection()
-    }
-    Shortcut {
-        enabled: !nameDialog.open
-        sequences: ["Ctrl+1"]
-        onActivated: Browser.viewMode = "list"
-    }
-    Shortcut {
-        enabled: !nameDialog.open
-        sequences: ["Ctrl+2"]
-        onActivated: Browser.viewMode = "grid"
-    }
-    Shortcut {
-        enabled: !nameDialog.open && !win.navBusy
-        sequences: ["Return", "Enter"]
-        onActivated: {
-            if (Pick.active) {
-                if (Browser.selectionCount === 1 && Browser.selectionIsDir && Pick.mode !== "save")
-                    win.enterFolder(Browser.selectedPaths[0])
-                else if (Pick.canConfirm)
-                    Pick.confirm()
-                return
-            }
-            if (Browser.selectionCount === 1 && Browser.selectionIsDir)
-                win.enterFolder(Browser.selectedPaths[0])
-            else
-                Browser.openSelection()
-        }
-    }
-    Shortcut {
-        enabled: Pick.active && !nameDialog.open
-        sequences: ["Escape"]
-        onActivated: Pick.cancel()
+    KeyBindings {
+        win: win
+        navEnabled: win.navEnabled
+        editEnabled: !nameDialog.open && !iconPicker.open
     }
 
     Component.onCompleted: {
