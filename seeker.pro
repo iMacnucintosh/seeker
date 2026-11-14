@@ -1,4 +1,4 @@
-QT += quick qml quickcontrols2 dbus svg widgets concurrent
+QT += quick qml quickcontrols2 dbus svg widgets concurrent multimedia
 CONFIG += c++20
 TARGET = seeker
 TEMPLATE = app
@@ -20,7 +20,8 @@ SOURCES += \
     src/ThumbnailProvider.cpp \
     src/Thumbnailers.cpp \
     src/PropertiesController.cpp \
-    src/OpenWithController.cpp
+    src/OpenWithController.cpp \
+    src/QuickLookController.cpp
 
 HEADERS += \
     src/JsonTranslator.h \
@@ -36,7 +37,8 @@ HEADERS += \
     src/ThumbnailProvider.h \
     src/Thumbnailers.h \
     src/PropertiesController.h \
-    src/OpenWithController.h
+    src/OpenWithController.h \
+    src/QuickLookController.h
 
 RESOURCES += qml.qrc
 

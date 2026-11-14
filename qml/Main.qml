@@ -37,7 +37,7 @@ ApplicationWindow {
     // empty | item | place (pinned sidebar row)
     property string contextKind: "empty"
     property string placeContextPath: ""
-    readonly property bool dialogOpen: nameDialog.open || ctxMenu.open || iconPicker.open || emptyTrashDialog.open || Properties.open || OpenWith.open
+    readonly property bool dialogOpen: nameDialog.open || ctxMenu.open || iconPicker.open || emptyTrashDialog.open || Properties.open || OpenWith.open || QuickLook.open
     /// Folder path under the drag cursor (view DropAreas inside Grid/List often miss DnD).
     property string dropTargetPath: ""
     property bool navBusy: false
@@ -187,6 +187,51 @@ ApplicationWindow {
             details.positionViewAtIndex(idx, ListView.Contain)
         else
             grid.positionViewAtIndex(idx, GridView.Contain)
+    }
+
+    // Where the selected file is drawn, for Quick Look to grow out of it (the centre if it is not on screen)
+    function selectionRect() {
+        const idx = Browser.currentIndex()
+        const view = Browser.viewMode === "list" ? list : (Browser.viewMode === "details" ? details : grid)
+        const item = idx >= 0 ? view.itemAtIndex(idx) : null
+        if (!item)
+            return Qt.rect(win.width / 2 - 24, win.height / 2 - 24, 48, 48)
+        const p = item.mapToItem(win.contentItem, 0, 0)
+        return Qt.rect(p.x, p.y, item.width, item.height)
+    }
+
+    // Space: preview the file; a folder, a file without a preview or several files show their properties
+    function toggleQuickLook() {
+        if (QuickLook.open) {
+            quickLookView.origin = win.selectionRect()
+            QuickLook.close()
+            return
+        }
+        if (Browser.selectionCount === 0)
+            return
+        const path = Browser.selectedPaths[0]
+        if (Browser.selectionCount === 1 && !Browser.selectionIsDir && QuickLook.kindOf(path) !== "other") {
+            quickLookView.origin = win.selectionRect()
+            QuickLook.show(path)
+        } else {
+            Properties.openPaths(Browser.selectedPaths)
+        }
+    }
+
+    // With Quick Look open the arrows move it along the files
+    Connections {
+        target: Browser
+        function onSelectionChanged() {
+            if (!QuickLook.open)
+                return
+            if (Browser.selectionCount === 1)
+                QuickLook.show(Browser.selectedPaths[0])
+            else
+                QuickLook.close()
+        }
+        function onPathChanged() {
+            QuickLook.close()
+        }
     }
 
     function moveSelectionByKey(key) {
@@ -1348,6 +1393,10 @@ ApplicationWindow {
         id: openWithDialog
     }
 
+    QuickLookView {
+        id: quickLookView
+    }
+
     EmptyTrashDialog {
         id: emptyTrashDialog
     }
@@ -1368,6 +1417,11 @@ ApplicationWindow {
                 Properties.openPaths([first])
             else if (DevShotOpen === "openwith")
                 OpenWith.openPath(Browser.pathAt(4))
+            else if (DevShotOpen.startsWith("look:")) {
+                // look:<index> previews that item
+                Browser.selectIndex(parseInt(DevShotOpen.slice(5)))
+                win.toggleQuickLook()
+            }
             else if (DevShotOpen === "menu")
                 win.showEmptyContext(500, 300)
             else if (DevShotOpen === "itemmenu") {

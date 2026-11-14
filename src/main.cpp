@@ -7,6 +7,7 @@
 #include "SoundPlayer.h"
 #include "OpenWithController.h"
 #include "PropertiesController.h"
+#include "QuickLookController.h"
 #include "Theme.h"
 #include "ThemeIconProvider.h"
 #include "ThumbnailProvider.h"
@@ -173,6 +174,7 @@ int main(int argc, char *argv[]) {
     SoundPlayer sounds;
     browser.setTheme(&theme);
     PropertiesController properties;
+    QuickLookController quickLook;
     OpenWithController openWith;
     browser.setOpenWith(&openWith);
 
@@ -217,6 +219,7 @@ int main(int argc, char *argv[]) {
     engine.rootContext()->setContextProperty(QStringLiteral("Pick"), &pick);
     engine.rootContext()->setContextProperty(QStringLiteral("Properties"), &properties);
     engine.rootContext()->setContextProperty(QStringLiteral("OpenWith"), &openWith);
+    engine.rootContext()->setContextProperty(QStringLiteral("QuickLook"), &quickLook);
     // Development: with SEEKER_SHOT, SEEKER_SHOT_OPEN names a dialog to open before the screenshot (Main.qml)
     engine.rootContext()->setContextProperty(QStringLiteral("DevShotOpen"), qEnvironmentVariable("SEEKER_SHOT_OPEN"));
     engine.load(QUrl(QStringLiteral("qrc:/qml/Main.qml")));

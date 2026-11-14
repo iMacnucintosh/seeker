@@ -31,7 +31,9 @@ Item {
         { keys: ["Ctrl+1"], when: "name", run: () => Browser.viewMode = "list" },
         { keys: ["Ctrl+2"], when: "name", run: () => Browser.viewMode = "grid" },
         { keys: ["Return", "Enter"], when: "go", run: () => root.openSelection() },
-        { keys: ["Escape"], when: "pick", run: () => Pick.cancel() }
+        { keys: ["Escape"], when: "pick", run: () => Pick.cancel() },
+        // Quick Look, like Finder
+        { keys: ["Space"], when: "look", run: () => win.toggleQuickLook() }
     ]
 
     function allowed(when) {
@@ -41,7 +43,8 @@ Item {
         case "edit": return root.editEnabled
         case "delete": return root.editEnabled && !win.addressEditing
         case "go": return naming && !win.navBusy
-        case "pick": return Pick.active && naming
+        case "pick": return Pick.active && naming && !QuickLook.open
+        case "look": return root.navEnabled || QuickLook.open
         default: return naming
         }
     }
