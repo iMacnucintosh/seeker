@@ -3,6 +3,8 @@
 #include <QAbstractListModel>
 #include <QDateTime>
 #include <QFileIconProvider>
+#include <QFileSystemWatcher>
+#include <QTimer>
 #include <QVector>
 
 struct DirEntry {
@@ -21,7 +23,7 @@ struct DirEntry {
 class DirModel : public QAbstractListModel {
     Q_OBJECT
     Q_PROPERTY(QString path READ path WRITE setPath NOTIFY pathChanged)
-    Q_PROPERTY(int count READ rowCount NOTIFY pathChanged)
+    Q_PROPERTY(int count READ rowCount NOTIFY countChanged)
     Q_PROPERTY(bool showHidden READ showHidden WRITE setShowHidden NOTIFY showHiddenChanged)
 
 public:
@@ -36,6 +38,7 @@ public:
         IconNameRole,
         IsImageRole,
         CanPreviewRole,
+        VersionRole,
     };
 
     explicit DirModel(QObject *parent = nullptr);
@@ -53,10 +56,25 @@ public:
 
 signals:
     void pathChanged();
+    void countChanged();
     void showHiddenChanged();
 
 private:
     void reload();
+    /// Reads the folder again and applies only the difference (rows in, rows out, rows changed), so the view
+    /// keeps its selection and scroll when something else writes to the folder.
+    void sync();
+    QVector<DirEntry> scan(const QVector<DirEntry> &known) const;
+    void watch();
+
+    // Only the folder on screen: one inotify watch, whatever its size
+    QFileSystemWatcher m_watcher;
+    // Bursts (a download, a copy of many files) end up in one read every so often
+    QTimer m_syncTimer;
+    // The folder watch only hears files come and go, not a copy that is still writing: while some file is
+    // younger than a couple of seconds, look again once more
+    QTimer m_settleTimer;
+    void settleLater();
 
     QString m_path;
     bool m_showHidden = false;

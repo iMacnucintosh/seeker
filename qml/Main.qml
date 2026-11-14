@@ -807,6 +807,7 @@ ApplicationWindow {
                         required property string iconName
                         required property bool isImage
                         required property bool canPreview
+                        required property string version
 
                         width: ListView.view.width
                         height: fileRow.height
@@ -821,6 +822,7 @@ ApplicationWindow {
                             iconName: rowWrap.iconName
                             isImage: rowWrap.isImage
                             canPreview: rowWrap.canPreview
+                            version: rowWrap.version
                             selected: Browser.selectedPaths.indexOf(rowWrap.path) >= 0
                             dropHover: rowWrap.isDir && rowWrap.path === win.dropTargetPath
                             opacity: rowWrap.isHidden ? 0.55 : 1
@@ -955,6 +957,7 @@ ApplicationWindow {
                             required property string iconName
                             required property bool isImage
                             required property bool canPreview
+                            required property string version
 
                             width: grid.cellWidth
                             height: grid.cellHeight
@@ -967,6 +970,7 @@ ApplicationWindow {
                                 iconName: cellWrap.iconName
                                 isImage: cellWrap.isImage
                                 canPreview: cellWrap.canPreview
+                                version: cellWrap.version
                                 selected: Browser.selectedPaths.indexOf(cellWrap.path) >= 0
                                 dropHover: cellWrap.isDir && cellWrap.path === win.dropTargetPath
                                 opacity: cellWrap.isHidden ? 0.55 : 1
@@ -1154,6 +1158,7 @@ ApplicationWindow {
                                 required property string iconName
                                 required property bool isImage
                                 required property bool canPreview
+                                required property string version
                                 required property real size
                                 required property string modifiedText
 
@@ -1170,6 +1175,7 @@ ApplicationWindow {
                                     iconName: detailsWrap.iconName
                                     isImage: detailsWrap.isImage
                                     canPreview: detailsWrap.canPreview
+                                    version: detailsWrap.version
                                     sizeText: Browser.formatSize(detailsWrap.size)
                                     modifiedText: detailsWrap.modifiedText
                                     selected: Browser.selectedPaths.indexOf(detailsWrap.path) >= 0

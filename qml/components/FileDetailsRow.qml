@@ -11,6 +11,8 @@ Item {
     property string iconName: "text-x-generic"
     property bool isImage: false
     property bool canPreview: false
+    // Changes with the file, so its thumbnail is asked for again (see DirModel::VersionRole)
+    property string version: ""
     property string sizeText: ""
     property string modifiedText: ""
     property bool selected: false
@@ -90,7 +92,7 @@ Item {
                 Image {
                     id: previewImage
                     anchors.fill: parent
-                    source: root.showPreview ? Browser.thumbUrl(root.path, root.thumbEdge) : ""
+                    source: root.showPreview ? Browser.thumbUrl(root.path, root.thumbEdge, root.version) : ""
                     fillMode: Image.PreserveAspectCrop
                     asynchronous: true
                     cache: true

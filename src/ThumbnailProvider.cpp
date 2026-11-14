@@ -197,6 +197,8 @@ QQuickImageResponse *ThumbnailProvider::requestImageResponse(const QString &id, 
             edge = want;
     }
 
+    // "?v=…" only makes the URL change with the file (see BrowserController::thumbUrl)
+    hex = hex.section(QLatin1Char('?'), 0, 0);
     const QString absPath = QString::fromUtf8(QByteArray::fromHex(hex.toLatin1()));
     auto *response = new ThumbResponse(absPath, edge);
     m_pool.start(response);

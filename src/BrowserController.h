@@ -123,7 +123,7 @@ public:
     Q_INVOKABLE void undo();
     Q_INVOKABLE QString iconUrl(const QString &iconName) const;
     /// Disk-cached preview: image://thumb/<edge>/<hex-path>
-    Q_INVOKABLE QString thumbUrl(const QString &path, int edge = 160) const;
+    Q_INVOKABLE QString thumbUrl(const QString &path, int edge = 160, const QString &version = {}) const;
     /// First image paths inside a folder for the mosaic (cached by dir mtime).
     Q_INVOKABLE QStringList folderPreviewPaths(const QString &dirPath, int maxCount = 4) const;
     /// Address-bar autocomplete: places + child dirs (no visit history).

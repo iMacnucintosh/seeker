@@ -3,11 +3,44 @@
 
 #include <QDir>
 #include <QFileInfo>
+#include <QHash>
 #include <QLocale>
 #include <QMimeDatabase>
 
 DirModel::DirModel(QObject *parent)
-    : QAbstractListModel(parent) {}
+    : QAbstractListModel(parent) {
+    m_syncTimer.setSingleShot(true);
+    m_syncTimer.setInterval(300);
+    connect(&m_syncTimer, &QTimer::timeout, this, &DirModel::sync);
+    m_settleTimer.setSingleShot(true);
+    m_settleTimer.setInterval(1000);
+    connect(&m_settleTimer, &QTimer::timeout, this, &DirModel::sync);
+    // Not restarted on every event: a folder that keeps changing still refreshes every 300 ms, not never
+    connect(&m_watcher, &QFileSystemWatcher::directoryChanged, this, [this] {
+        if (!m_syncTimer.isActive())
+            m_syncTimer.start();
+    });
+}
+
+void DirModel::settleLater() {
+    const QDateTime recent = QDateTime::currentDateTime().addSecs(-3);
+    for (const DirEntry &e : std::as_const(m_entries)) {
+        if (!e.isDir && e.modified > recent) {
+            m_settleTimer.start();
+            return;
+        }
+    }
+}
+
+void DirModel::watch() {
+    const QStringList watched = m_watcher.directories();
+    if (watched.size() == 1 && watched.first() == m_path)
+        return;
+    if (!watched.isEmpty())
+        m_watcher.removePaths(watched);
+    if (!m_path.isEmpty() && QFileInfo(m_path).isDir())
+        m_watcher.addPath(m_path);
+}
 
 void DirModel::setPath(const QString &path) {
     QString normalized = QDir::cleanPath(path);
@@ -35,22 +68,81 @@ void DirModel::setShowHidden(bool show) {
 }
 
 void DirModel::reload() {
+    m_syncTimer.stop();
+    m_settleTimer.stop();
     beginResetModel();
-    m_entries.clear();
+    m_entries = scan({});
+    endResetModel();
+    watch();
+    emit countChanged();
+}
 
-    QDir dir(m_path);
-    if (!dir.exists()) {
-        endResetModel();
+void DirModel::sync() {
+    // The folder itself went away (deleted, unmounted): show it empty, as a reload would
+    if (!QFileInfo(m_path).isDir()) {
+        reload();
         return;
     }
+    const QVector<DirEntry> fresh = scan(m_entries);
+    QHash<QString, int> inFresh;
+    inFresh.reserve(fresh.size());
+    for (int i = 0; i < fresh.size(); ++i)
+        inFresh.insert(fresh.at(i).path, i);
+
+    // Rows that are gone, from the end so the indexes hold
+    for (int i = m_entries.size() - 1; i >= 0; --i) {
+        if (inFresh.contains(m_entries.at(i).path))
+            continue;
+        beginRemoveRows({}, i, i);
+        m_entries.removeAt(i);
+        endRemoveRows();
+    }
+    // Both lists share the order, so what is left is a subsequence of the fresh one: insert the new rows
+    // where they belong, and refresh the ones whose size or date changed
+    for (int i = 0; i < fresh.size(); ++i) {
+        const DirEntry &e = fresh.at(i);
+        if (i >= m_entries.size() || m_entries.at(i).path != e.path) {
+            beginInsertRows({}, i, i);
+            m_entries.insert(i, e);
+            endInsertRows();
+            continue;
+        }
+        DirEntry &cur = m_entries[i];
+        if (cur.size != e.size || cur.modified != e.modified || cur.mimeIcon != e.mimeIcon || cur.isHidden != e.isHidden) {
+            cur = e;
+            const QModelIndex idx = index(i, 0);
+            emit dataChanged(idx, idx);
+        }
+    }
+    if (m_entries.size() != fresh.size()) {
+        // Should not happen (the order is the same); fall back to a full read rather than show a wrong list
+        reload();
+        return;
+    }
+    emit countChanged();
+    settleLater();
+}
+
+QVector<DirEntry> DirModel::scan(const QVector<DirEntry> &known) const {
+    QVector<DirEntry> out;
+    QDir dir(m_path);
+    if (!dir.exists())
+        return out;
 
     QDir::Filters filters = QDir::AllEntries | QDir::NoDotAndDotDot;
     if (m_showHidden)
         filters |= QDir::Hidden;
 
+    // What a refresh already knows: a file with the same name, size and date keeps its type, without asking
+    // the MIME database again
+    QHash<QString, const DirEntry *> byPath;
+    byPath.reserve(known.size());
+    for (const DirEntry &k : known)
+        byPath.insert(k.path, &k);
+
     const auto infos = dir.entryInfoList(filters, QDir::DirsFirst | QDir::Name | QDir::IgnoreCase);
     QMimeDatabase mimeDb;
-    m_entries.reserve(infos.size());
+    out.reserve(infos.size());
     for (const QFileInfo &fi : infos) {
         DirEntry e;
         e.name = fi.fileName();
@@ -59,9 +151,14 @@ void DirModel::reload() {
         e.isHidden = fi.isHidden();
         e.size = fi.isDir() ? 0 : fi.size();
         e.modified = fi.lastModified();
-        if (e.isDir)
+        const DirEntry *old = byPath.value(e.path, nullptr);
+        if (old && old->isDir == e.isDir && old->size == e.size && old->modified == e.modified) {
+            e.isImage = old->isImage;
+            e.canPreview = old->canPreview;
+            e.mimeIcon = old->mimeIcon;
+        } else if (e.isDir) {
             e.mimeIcon = QStringLiteral("folder");
-        else {
+        } else {
             // Extension first; read the file's content only when the name says nothing. Sniffing
             // every file (twice, with the thumbnailer check) made big folders slow to open.
             const auto mimeExt = mimeDb.mimeTypeForFile(fi, QMimeDatabase::MatchExtension);
@@ -75,9 +172,9 @@ void DirModel::reload() {
                 icon = mime.iconName();
             e.mimeIcon = icon.isEmpty() ? QStringLiteral("text-x-generic") : icon;
         }
-        m_entries.push_back(std::move(e));
+        out.push_back(std::move(e));
     }
-    endResetModel();
+    return out;
 }
 
 int DirModel::rowCount(const QModelIndex &parent) const {
@@ -113,6 +210,9 @@ QVariant DirModel::data(const QModelIndex &index, int role) const {
         return e.isImage;
     case CanPreviewRole:
         return e.canPreview;
+    case VersionRole:
+        // Changes when the file does: thumbnails asked for while it was still being written get asked again
+        return QStringLiteral("%1-%2").arg(e.modified.toMSecsSinceEpoch()).arg(e.size);
     default:
         return {};
     }
@@ -130,5 +230,6 @@ QHash<int, QByteArray> DirModel::roleNames() const {
         {IconNameRole, "iconName"},
         {IsImageRole, "isImage"},
         {CanPreviewRole, "canPreview"},
+        {VersionRole, "version"},
     };
 }
