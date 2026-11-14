@@ -8,6 +8,7 @@
 #include <QRegularExpression>
 #include <QStandardPaths>
 #include <QStringDecoder>
+#include <QtConcurrent/QtConcurrentRun>
 
 namespace {
 
@@ -35,7 +36,18 @@ void stopProcess(QPointer<QProcess> &proc) {
 } // namespace
 
 QuickLookController::QuickLookController(QObject *parent)
-    : QObject(parent) {}
+    : QObject(parent) {
+    // Rendered PDF pages nobody looked at for two weeks go, off the UI thread
+    const QString dir = QDir(QStandardPaths::writableLocation(QStandardPaths::CacheLocation)).filePath(QStringLiteral("quicklook"));
+    (void)QtConcurrent::run([dir] {
+        const QDateTime limit = QDateTime::currentDateTime().addDays(-14);
+        const auto files = QDir(dir).entryInfoList({QStringLiteral("*.png")}, QDir::Files);
+        for (const QFileInfo &fi : files) {
+            if (fi.lastModified() < limit)
+                QFile::remove(fi.absoluteFilePath());
+        }
+    });
+}
 
 QuickLookController::~QuickLookController() {
     stopProcess(m_infoProc);
@@ -172,6 +184,7 @@ void QuickLookController::renderPage() {
     const QString prefix = pageCachePath(m_page);
     const QString png = prefix + QStringLiteral(".png");
     if (QFileInfo::exists(png)) {
+        QFile(png).setFileTime(QDateTime::currentDateTime(), QFileDevice::FileModificationTime);
         m_pageImage = png;
         emit pageChanged();
         return;
