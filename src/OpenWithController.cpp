@@ -255,6 +255,7 @@ bool OpenWithController::mimeMatches(const QStringList &desktopMimes, const QStr
 void OpenWithController::loadApps(const QString &mimeName, const QStringList &mimeParents) {
     m_apps.clear();
     QHash<QString, AppEntry> byId;
+    QMimeDatabase mimeDb;
 
     for (const QString &dirPath : applicationDirs()) {
         QDir dir(dirPath);
@@ -269,7 +270,13 @@ void OpenWithController::loadApps(const QString &mimeName, const QStringList &mi
                 continue;
             if (desk.mimeType.isEmpty())
                 continue;
-            const QStringList deskMimes = splitDesktopList(desk.mimeType);
+            // Apps may list a type by an old alias (video/x-matroska is now video/matroska): compare canonical names
+            QStringList deskMimes = splitDesktopList(desk.mimeType);
+            for (const QString &m : splitDesktopList(desk.mimeType)) {
+                const QMimeType canonical = mimeDb.mimeTypeForName(m);
+                if (canonical.isValid() && !deskMimes.contains(canonical.name()))
+                    deskMimes << canonical.name();
+            }
             if (!mimeMatches(deskMimes, mimeName, mimeParents))
                 continue;
 
