@@ -1310,13 +1310,16 @@ QString BrowserController::iconUrl(const QString &requestedName) const {
     return url;
 }
 
-QString BrowserController::thumbUrl(const QString &path, int edge) const {
+QString BrowserController::thumbUrl(const QString &path, int edge, const QString &version) const {
     if (path.isEmpty())
         return {};
     const int e = qBound(32, 512, edge > 0 ? edge : 160);
-    return QStringLiteral("image://thumb/%1/%2")
+    QString url = QStringLiteral("image://thumb/%1/%2")
         .arg(e)
         .arg(QString::fromLatin1(path.toUtf8().toHex()));
+    if (!version.isEmpty())
+        url += QStringLiteral("?v=") + QString::fromLatin1(QUrl::toPercentEncoding(version));
+    return url;
 }
 
 QString BrowserController::placeSymbol(const QString &path) const {

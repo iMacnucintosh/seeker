@@ -37,9 +37,7 @@ ApplicationWindow {
     // empty | item | place (pinned sidebar row)
     property string contextKind: "empty"
     property string placeContextPath: ""
-    // rename | create
-    property string nameDialogMode: "rename"
-    readonly property bool dialogOpen: nameDialog.open || ctxMenu.open || iconPicker.open || emptyTrashDialog.open || Properties.open || OpenWith.open
+    readonly property bool dialogOpen: nameDialog.open || ctxMenu.open || iconPicker.open || emptyTrashDialog.open || Properties.open || OpenWith.open || QuickLook.open
     /// Folder path under the drag cursor (view DropAreas inside Grid/List often miss DnD).
     property string dropTargetPath: ""
     property bool navBusy: false
@@ -144,42 +142,15 @@ ApplicationWindow {
 
     function beginRename() {
         dismissMenus()
-        if (Browser.selectionCount !== 1)
-            return
         const paths = Browser.selectedPaths
-        if (!paths.length)
+        if (Browser.selectionCount !== 1 || !paths.length)
             return
-        nameDialogMode = "rename"
-        nameField.text = paths[0].split("/").pop()
-        nameDialog.open = true
-        Qt.callLater(() => {
-            nameField.forceActiveFocus()
-            nameField.selectAll()
-        })
+        nameDialog.begin("rename", paths[0].split("/").pop())
     }
 
     function beginCreateFolder() {
         dismissMenus()
-        nameDialogMode = "create"
-        nameField.text = "Carpeta nueva"
-        nameDialog.open = true
-        Qt.callLater(() => {
-            nameField.forceActiveFocus()
-            nameField.selectAll()
-        })
-    }
-
-    function confirmNameDialog() {
-        const name = nameField.text.trim()
-        if (!name.length)
-            return
-        if (nameDialogMode === "create")
-            Browser.createFolder(name)
-        else
-            Browser.renameSelected(name)
-        nameDialog.open = false
-        if (win.contentItem)
-            win.contentItem.forceActiveFocus()
+        nameDialog.begin("create", qsTr("New folder"))
     }
 
     /// Double-click / Abrir carpeta: zoom-out of current view, then settle into the new one.
@@ -216,6 +187,51 @@ ApplicationWindow {
             details.positionViewAtIndex(idx, ListView.Contain)
         else
             grid.positionViewAtIndex(idx, GridView.Contain)
+    }
+
+    // Where the selected file is drawn, for Quick Look to grow out of it (the centre if it is not on screen)
+    function selectionRect() {
+        const idx = Browser.currentIndex()
+        const view = Browser.viewMode === "list" ? list : (Browser.viewMode === "details" ? details : grid)
+        const item = idx >= 0 ? view.itemAtIndex(idx) : null
+        if (!item)
+            return Qt.rect(win.width / 2 - 24, win.height / 2 - 24, 48, 48)
+        const p = item.mapToItem(win.contentItem, 0, 0)
+        return Qt.rect(p.x, p.y, item.width, item.height)
+    }
+
+    // Space: preview the file; a folder, a file without a preview or several files show their properties
+    function toggleQuickLook() {
+        if (QuickLook.open) {
+            quickLookView.origin = win.selectionRect()
+            QuickLook.close()
+            return
+        }
+        if (Browser.selectionCount === 0)
+            return
+        const path = Browser.selectedPaths[0]
+        if (Browser.selectionCount === 1 && !Browser.selectionIsDir && QuickLook.kindOf(path) !== "other") {
+            quickLookView.origin = win.selectionRect()
+            QuickLook.show(path)
+        } else {
+            Properties.openPaths(Browser.selectedPaths)
+        }
+    }
+
+    // With Quick Look open the arrows move it along the files
+    Connections {
+        target: Browser
+        function onSelectionChanged() {
+            if (!QuickLook.open)
+                return
+            if (Browser.selectionCount === 1)
+                QuickLook.show(Browser.selectedPaths[0])
+            else
+                QuickLook.close()
+        }
+        function onPathChanged() {
+            QuickLook.close()
+        }
     }
 
     function moveSelectionByKey(key) {
@@ -836,6 +852,7 @@ ApplicationWindow {
                         required property string iconName
                         required property bool isImage
                         required property bool canPreview
+                        required property string version
 
                         width: ListView.view.width
                         height: fileRow.height
@@ -850,6 +867,7 @@ ApplicationWindow {
                             iconName: rowWrap.iconName
                             isImage: rowWrap.isImage
                             canPreview: rowWrap.canPreview
+                            version: rowWrap.version
                             selected: Browser.selectedPaths.indexOf(rowWrap.path) >= 0
                             dropHover: rowWrap.isDir && rowWrap.path === win.dropTargetPath
                             opacity: rowWrap.isHidden ? 0.55 : 1
@@ -984,6 +1002,7 @@ ApplicationWindow {
                             required property string iconName
                             required property bool isImage
                             required property bool canPreview
+                            required property string version
 
                             width: grid.cellWidth
                             height: grid.cellHeight
@@ -996,6 +1015,7 @@ ApplicationWindow {
                                 iconName: cellWrap.iconName
                                 isImage: cellWrap.isImage
                                 canPreview: cellWrap.canPreview
+                                version: cellWrap.version
                                 selected: Browser.selectedPaths.indexOf(cellWrap.path) >= 0
                                 dropHover: cellWrap.isDir && cellWrap.path === win.dropTargetPath
                                 opacity: cellWrap.isHidden ? 0.55 : 1
@@ -1183,6 +1203,7 @@ ApplicationWindow {
                                 required property string iconName
                                 required property bool isImage
                                 required property bool canPreview
+                                required property string version
                                 required property real size
                                 required property string modifiedText
 
@@ -1199,6 +1220,7 @@ ApplicationWindow {
                                     iconName: detailsWrap.iconName
                                     isImage: detailsWrap.isImage
                                     canPreview: detailsWrap.canPreview
+                                    version: detailsWrap.version
                                     sizeText: Browser.formatSize(detailsWrap.size)
                                     modifiedText: detailsWrap.modifiedText
                                     selected: Browser.selectedPaths.indexOf(detailsWrap.path) >= 0
@@ -1332,194 +1354,10 @@ ApplicationWindow {
         }
     }
 
-    ContextMenu {
+    FileContextMenu {
         id: ctxMenu
-
-        // —— empty background ——
-        ContextMenu.MenuRow {
-            visible: win.contextKind === "empty"
-            icon: "undo"
-            label: qsTr("Undo")
-            enabled: Browser.canUndo
-            onClicked: Browser.undo()
-        }
-        ContextMenu.MenuRow {
-            visible: win.contextKind === "empty"
-            icon: "create_new_folder"
-            label: qsTr("New folder")
-            onClicked: win.beginCreateFolder()
-        }
-        ContextMenu.MenuRow {
-            visible: win.contextKind === "empty"
-            icon: "terminal"
-            label: qsTr("Open terminal here")
-            onClicked: Browser.openTerminalHere()
-        }
-        ContextMenu.MenuRow {
-            visible: win.contextKind === "empty"
-            icon: "content_paste"
-            label: qsTr("Paste")
-            enabled: Browser.hasClipboard
-            onClicked: Browser.paste()
-        }
-        ContextMenu.MenuRow {
-            visible: win.contextKind === "empty"
-            icon: "select_all"
-            label: qsTr("Select all")
-            onClicked: Browser.selectAll()
-        }
-        ContextMenu.MenuRow {
-            visible: win.contextKind === "empty"
-            icon: "refresh"
-            label: qsTr("Refresh")
-            onClicked: Browser.refresh()
-        }
-
-        // —— selection ——
-        ContextMenu.MenuRow {
-            visible: win.contextKind === "item"
-            icon: "undo"
-            label: qsTr("Undo")
-            enabled: Browser.canUndo
-            onClicked: Browser.undo()
-        }
-        ContextMenu.MenuRow {
-            visible: win.contextKind === "item"
-            icon: "open_in_new"
-            label: Browser.selectionIsDir ? qsTr("Open") : qsTr("Open")
-            enabled: Browser.selectionCount === 1
-            onClicked: {
-                if (!Browser.selectedPaths.length)
-                    return
-                if (Browser.selectionIsDir)
-                    win.enterFolder(Browser.selectedPaths[0])
-                else
-                    Browser.openPath(Browser.selectedPaths[0])
-            }
-        }
-        ContextMenu.MenuRow {
-            visible: win.contextKind === "item" && !Browser.selectionIsDir
-            icon: "apps"
-            label: qsTr("Open with")
-            enabled: Browser.selectionCount === 1
-            onClicked: {
-                if (Browser.selectedPaths.length)
-                    OpenWith.openPath(Browser.selectedPaths[0])
-            }
-        }
-        ContextMenu.Separator {
-            visible: win.contextKind === "item"
-        }
-        ContextMenu.MenuRow {
-            visible: win.contextKind === "item"
-            icon: "content_copy"
-            label: qsTr("Copy")
-            enabled: Browser.selectionCount > 0
-            onClicked: Browser.copySelection()
-        }
-        ContextMenu.MenuRow {
-            visible: win.contextKind === "item"
-            icon: "content_cut"
-            label: qsTr("Cut")
-            enabled: Browser.selectionCount > 0
-            onClicked: Browser.cutSelection()
-        }
-        ContextMenu.MenuRow {
-            visible: win.contextKind === "item"
-            icon: "content_paste"
-            label: qsTr("Paste")
-            enabled: Browser.hasClipboard
-            onClicked: Browser.paste()
-        }
-        ContextMenu.MenuRow {
-            visible: win.contextKind === "item"
-            icon: "control_point_duplicate"
-            label: qsTr("Duplicate")
-            enabled: Browser.selectionCount === 1
-            onClicked: Browser.duplicateSelection()
-        }
-        ContextMenu.MenuRow {
-            visible: win.contextKind === "item" && Archive.available
-            icon: "folder_zip"
-            label: qsTr("Compress to ZIP")
-            enabled: Browser.selectionCount > 0 && !Archive.busy
-            onClicked: Archive.compress(Browser.selectedPaths)
-        }
-        ContextMenu.MenuRow {
-            visible: win.contextKind === "item" && Browser.selectionCount === 1
-                     && Browser.selectedPaths.length > 0 && Archive.canExtract(Browser.selectedPaths[0])
-            icon: "unarchive"
-            label: qsTr("Extract here")
-            enabled: !Archive.busy
-            onClicked: Archive.extractHere(Browser.selectedPaths[0])
-        }
-        ContextMenu.MenuRow {
-            visible: win.contextKind === "item"
-            icon: "drive_file_rename_outline"
-            label: qsTr("Rename")
-            enabled: Browser.selectionCount === 1
-            onClicked: win.beginRename()
-        }
-        ContextMenu.MenuRow {
-            visible: win.contextKind === "item" && Browser.selectionIsDir
-            icon: "category"
-            label: qsTr("Change icon")
-            enabled: Browser.selectionCount === 1
-            onClicked: {
-                if (Browser.selectedPaths.length)
-                    iconPicker.begin(Browser.selectedPaths[0])
-            }
-        }
-        ContextMenu.MenuRow {
-            visible: win.contextKind === "item"
-                     && Browser.selectionIsDir
-                     && Browser.selectionCount === 1
-                     && Browser.selectedPaths.length
-                     && !Browser.isBuiltinPlace(Browser.selectedPaths[0])
-            icon: Browser.selectedPaths.length && Browser.isPinned(Browser.selectedPaths[0])
-                  ? "bookmark_remove" : "bookmark_add"
-            label: Browser.selectedPaths.length && Browser.isPinned(Browser.selectedPaths[0])
-                   ? qsTr("Remove from the sidebar") : qsTr("Add to the sidebar")
-            onClicked: {
-                if (!Browser.selectedPaths.length)
-                    return
-                const p = Browser.selectedPaths[0]
-                if (Browser.isPinned(p))
-                    Browser.unpinPlace(p)
-                else
-                    Browser.pinPlace(p)
-            }
-        }
-
-        // —— pinned sidebar place ——
-        ContextMenu.MenuRow {
-            visible: win.contextKind === "place"
-            icon: "bookmark_remove"
-            label: qsTr("Remove from the sidebar")
-            enabled: win.placeContextPath.length > 0
-            onClicked: {
-                if (win.placeContextPath.length)
-                    Browser.unpinPlace(win.placeContextPath)
-            }
-        }
-        ContextMenu.Separator {
-            visible: win.contextKind === "item"
-        }
-        ContextMenu.MenuRow {
-            visible: win.contextKind === "item"
-            icon: "info"
-            label: qsTr("Details")
-            enabled: Browser.selectionCount > 0
-            onClicked: Properties.openPaths(Browser.selectedPaths)
-        }
-        ContextMenu.MenuRow {
-            visible: win.contextKind === "item"
-            icon: "delete"
-            label: Browser.inTrash ? qsTr("Delete permanently") : qsTr("Move to the trash")
-            dangerous: true
-            enabled: Browser.selectionCount > 0
-            onClicked: Browser.trashSelection()
-        }
+        win: win
+        iconPicker: iconPicker
     }
 
     TaskToast {
@@ -1555,341 +1393,57 @@ ApplicationWindow {
         id: openWithDialog
     }
 
-    // Confirm permanent empty-trash.
-    Item {
+    QuickLookView {
+        id: quickLookView
+    }
+
+    EmptyTrashDialog {
         id: emptyTrashDialog
-        property bool open: false
-        property real progress: open ? 1 : 0
-        anchors.fill: parent
-        visible: progress > 0.01
-        z: 105
+    }
 
-        Behavior on progress {
-            NumberAnimation {
-                duration: emptyTrashDialog.open ? 220 : 150
-                easing.type: emptyTrashDialog.open ? Easing.OutBack : Easing.InCubic
-                easing.overshoot: 1.12
+    // Development (SEEKER_SHOT_OPEN, see main.cpp): a dialog open for the screenshot, on the first item of the folder
+    Timer {
+        running: DevShotOpen.length > 0
+        interval: 900
+        onTriggered: {
+            const first = Browser.pathAt(0)
+            if (DevShotOpen === "name")
+                nameDialog.begin("create", qsTr("New folder"))
+            else if (DevShotOpen === "trash")
+                emptyTrashDialog.open = true
+            else if (DevShotOpen === "icon")
+                iconPicker.begin(first)
+            else if (DevShotOpen === "properties")
+                Properties.openPaths([first])
+            else if (DevShotOpen === "openwith")
+                OpenWith.openPath(Browser.pathAt(4))
+            else if (DevShotOpen.startsWith("look:")) {
+                // look:<index> previews that item
+                Browser.selectIndex(parseInt(DevShotOpen.slice(5)))
+                win.toggleQuickLook()
             }
-        }
-
-        Rectangle {
-            anchors.fill: parent
-            color: "#000000"
-            opacity: emptyTrashDialog.progress * 0.45
-        }
-        MouseArea {
-            anchors.fill: parent
-            enabled: emptyTrashDialog.open
-            onClicked: emptyTrashDialog.open = false
-        }
-
-        Rectangle {
-            anchors.centerIn: parent
-            anchors.verticalCenterOffset: (1 - emptyTrashDialog.progress) * 16
-            width: 360
-            height: 188
-            radius: 20
-            color: Theme.popup
-            border.width: 1
-            border.color: Theme.outlineVariant
-            opacity: emptyTrashDialog.progress
-            scale: 0.94 + emptyTrashDialog.progress * 0.06
-
-            MouseArea { anchors.fill: parent; z: -1; onClicked: {} }
-
-            ColumnLayout {
-                anchors.fill: parent
-                anchors.margins: 20
-                spacing: 10
-
-                StyledText {
-                    text: qsTr("Empty the trash?")
-                    color: Theme.onSurface
-                    font.pixelSize: 16
-                    font.weight: Font.Medium
-                }
-                StyledText {
-                    Layout.fillWidth: true
-                    text: Browser.trashStatsBusy && Browser.trashSize === 0
-                          ? qsTr("All the items will be deleted permanently. This cannot be undone.")
-                          : qsTr("%1 (%2) will be deleted permanently. This cannot be undone.")
-                                .arg(Browser.trashCount === 1 ? qsTr("1 item") : qsTr("%1 items").arg(Browser.trashCount))
-                                .arg(Browser.formatSize(Browser.trashSize))
-                    color: Theme.onSurfaceVariant
-                    font.pixelSize: 13
-                    wrapMode: Text.Wrap
-                }
-                Item { Layout.fillHeight: true }
-                RowLayout {
-                    Layout.alignment: Qt.AlignRight
-                    spacing: 8
-                    IconButton {
-                        icon: "close"
-                        onClicked: emptyTrashDialog.open = false
-                    }
-                    Rectangle {
-                        width: confirmEmptyLabel.implicitWidth + 28
-                        height: 40
-                        radius: 20
-                        color: Theme.error
-                        StyledText {
-                            id: confirmEmptyLabel
-                            anchors.centerIn: parent
-                            text: qsTr("Empty")
-                            color: Theme.onError
-                            font.pixelSize: 14
-                            font.weight: Font.Medium
-                        }
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: {
-                                emptyTrashDialog.open = false
-                                Browser.emptyTrash()
-                            }
-                        }
-                    }
-                }
+            else if (DevShotOpen === "menu")
+                win.showEmptyContext(500, 300)
+            else if (DevShotOpen === "itemmenu") {
+                Browser.selectIndex(4)
+                win.showItemContext(500, 200)
             }
         }
     }
 
-    // Name dialog — rename existing OR create folder (only mkdir on confirm).
-    Item {
+    NameDialog {
         id: nameDialog
-        property bool open: false
-        property real progress: open ? 1 : 0
-        anchors.fill: parent
-        visible: progress > 0.01
-        z: 100
-
-        Behavior on progress {
-            NumberAnimation {
-                duration: nameDialog.open ? 240 : 160
-                easing.type: nameDialog.open ? Easing.OutBack : Easing.InCubic
-                easing.overshoot: 1.15
-            }
-        }
-
-        // Scrim
-        Rectangle {
-            anchors.fill: parent
-            color: "#000000"
-            opacity: nameDialog.progress * 0.45
-        }
-
-        MouseArea {
-            anchors.fill: parent
-            enabled: nameDialog.open
-            onClicked: nameDialog.open = false
-        }
-
-        Rectangle {
-            id: nameCard
-            anchors.centerIn: parent
-            anchors.verticalCenterOffset: (1 - nameDialog.progress) * 18
-            width: 360
-            height: 160
-            radius: 20
-            color: Theme.popup
-            border.width: 1
-            border.color: Theme.outlineVariant
-            opacity: nameDialog.progress
-            scale: 0.92 + nameDialog.progress * 0.08
-            transformOrigin: Item.Center
-
-            ColumnLayout {
-                anchors.fill: parent
-                anchors.margins: 20
-                spacing: 12
-
-                StyledText {
-                    text: win.nameDialogMode === "create" ? qsTr("New folder") : qsTr("Rename")
-                    color: Theme.onSurface
-                    font.pixelSize: 16
-                    font.weight: Font.Medium
-                }
-
-                TextField {
-                    id: nameField
-                    Layout.fillWidth: true
-                    color: Theme.onSurface
-                    selectedTextColor: Theme.onPrimary
-                    selectionColor: Theme.primary
-                    font.family: Theme.uiFamily
-                    font.pixelSize: 14
-                    background: Rectangle {
-                        radius: 12
-                        color: Theme.surfaceContainerHighest
-                    }
-                    leftPadding: 12
-                    rightPadding: 12
-                    topPadding: 10
-                    bottomPadding: 10
-                    Keys.onReturnPressed: win.confirmNameDialog()
-                    Keys.onEnterPressed: win.confirmNameDialog()
-                    Keys.onEscapePressed: nameDialog.open = false
-                }
-
-                RowLayout {
-                    Layout.alignment: Qt.AlignRight
-                    spacing: 8
-
-                    IconButton {
-                        icon: "close"
-                        onClicked: nameDialog.open = false
-                    }
-                    Rectangle {
-                        width: 40
-                        height: 40
-                        radius: 20
-                        color: Theme.primary
-                        opacity: nameField.text.trim().length ? 1 : 0.38
-                        MaterialIcon {
-                            anchors.centerIn: parent
-                            icon: win.nameDialogMode === "create" ? "add" : "check"
-                            size: 22
-                            colour: Theme.onPrimary
-                        }
-                        MouseArea {
-                            anchors.fill: parent
-                            enabled: nameField.text.trim().length > 0
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: win.confirmNameDialog()
-                        }
-                    }
-                }
-            }
-
-            MouseArea {
-                anchors.fill: parent
-                z: -1
-                onClicked: {}
-            }
-        }
     }
 
     readonly property bool navEnabled: !nameDialog.open && !iconPicker.open && !emptyTrashDialog.open && !Properties.open && !OpenWith.open && !pathBar.editing && !ctxMenu.open
 
-    Shortcut {
-        enabled: win.navEnabled
-        sequences: ["Up"]
-        onActivated: win.moveSelectionByKey(Qt.Key_Up)
-    }
-    Shortcut {
-        enabled: win.navEnabled
-        sequences: ["Down"]
-        onActivated: win.moveSelectionByKey(Qt.Key_Down)
-    }
-    Shortcut {
-        enabled: win.navEnabled
-        sequences: ["Left"]
-        onActivated: win.moveSelectionByKey(Qt.Key_Left)
-    }
-    Shortcut {
-        enabled: win.navEnabled
-        sequences: ["Right"]
-        onActivated: win.moveSelectionByKey(Qt.Key_Right)
-    }
-    Shortcut {
-        enabled: win.navEnabled
-        sequences: ["Home"]
-        onActivated: {
-            Browser.selectIndex(0)
-            win.ensureSelectionVisible()
-        }
-    }
-    Shortcut {
-        enabled: win.navEnabled
-        sequences: ["End"]
-        onActivated: {
-            Browser.selectIndex(Math.max(0, Browser.model.count - 1))
-            win.ensureSelectionVisible()
-        }
-    }
+    readonly property bool nameDialogOpen: nameDialog.open
+    readonly property bool addressEditing: pathBar.editing
 
-    // Ctrl+Z / Delete: also handled in C++ ShellKeyFilter — QML Shortcut flakes on Wayland.
-    Shortcut {
-        enabled: !nameDialog.open && !iconPicker.open
-        sequences: [StandardKey.Copy]
-        onActivated: Browser.copySelection()
-    }
-    Shortcut {
-        enabled: !nameDialog.open && !iconPicker.open
-        sequences: [StandardKey.Cut]
-        onActivated: Browser.cutSelection()
-    }
-    Shortcut {
-        enabled: !nameDialog.open && !iconPicker.open
-        sequences: [StandardKey.Paste]
-        onActivated: Browser.paste()
-    }
-    Shortcut {
-        enabled: !nameDialog.open && !iconPicker.open
-        sequences: [StandardKey.SelectAll]
-        onActivated: Browser.selectAll()
-    }
-    Shortcut {
-        // Backup; ShellKeyFilter is the reliable path on Wayland.
-        enabled: !nameDialog.open && !iconPicker.open && !pathBar.editing
-        context: Qt.ApplicationShortcut
-        sequences: [StandardKey.Delete, "Delete"]
-        onActivated: {
-            if (Browser.selectionCount > 0)
-                Browser.trashSelection()
-        }
-    }
-    Shortcut {
-        enabled: !nameDialog.open && !win.navBusy
-        sequences: ["Backspace"]
-        onActivated: win.softNavigate(() => Browser.goUp())
-    }
-    Shortcut {
-        enabled: !nameDialog.open
-        sequences: ["F2"]
-        onActivated: win.beginRename()
-    }
-    Shortcut {
-        enabled: !nameDialog.open
-        sequences: ["Ctrl+Shift+N"]
-        onActivated: win.beginCreateFolder()
-    }
-    Shortcut {
-        enabled: !nameDialog.open
-        sequences: ["Ctrl+D"]
-        onActivated: Browser.duplicateSelection()
-    }
-    Shortcut {
-        enabled: !nameDialog.open
-        sequences: ["Ctrl+1"]
-        onActivated: Browser.viewMode = "list"
-    }
-    Shortcut {
-        enabled: !nameDialog.open
-        sequences: ["Ctrl+2"]
-        onActivated: Browser.viewMode = "grid"
-    }
-    Shortcut {
-        enabled: !nameDialog.open && !win.navBusy
-        sequences: ["Return", "Enter"]
-        onActivated: {
-            if (Pick.active) {
-                if (Browser.selectionCount === 1 && Browser.selectionIsDir && Pick.mode !== "save")
-                    win.enterFolder(Browser.selectedPaths[0])
-                else if (Pick.canConfirm)
-                    Pick.confirm()
-                return
-            }
-            if (Browser.selectionCount === 1 && Browser.selectionIsDir)
-                win.enterFolder(Browser.selectedPaths[0])
-            else
-                Browser.openSelection()
-        }
-    }
-    Shortcut {
-        enabled: Pick.active && !nameDialog.open
-        sequences: ["Escape"]
-        onActivated: Pick.cancel()
+    KeyBindings {
+        win: win
+        navEnabled: win.navEnabled
+        editEnabled: !nameDialog.open && !iconPicker.open
     }
 
     Component.onCompleted: {

@@ -1,5 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
-  <!-- Material You: flat folder, primary + primary-container tones -->
-  <path d="M8 36a12 12 0 0 1 12-12h28.6c3.2 0 6.2 1.3 8.5 3.5L66 36h42a12 12 0 0 1 12 12v48a12 12 0 0 1-12 12H20A12 12 0 0 1 8 96z" fill="#B99875"/>
-  <path d="M8 54a12 12 0 0 1 12-12h88a12 12 0 0 1 12 12v42a12 12 0 0 1-12 12H20A12 12 0 0 1 8 96z" fill="#E4C09B"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <!-- Seeker: the symbol alone, in its own flat colour -->
+  <g transform="translate(64 64) scale(1.6) translate(-64 -64)">
+  <path d="M34 44c0-3.3 2.7-6 6-6h14.5c1.7 0 3.3.7 4.4 1.9l3.6 3.9c.6.6 1.4 1 2.2 1H88c3.3 0 6 2.7 6 6v29c0 3.3-2.7 6-6 6H40c-3.3 0-6-2.7-6-6z" fill="#4a78dc" opacity=".72"/>
+  <path d="M34 58c0-3.3 2.7-6 6-6h48c3.3 0 6 2.7 6 6v22c0 3.3-2.7 6-6 6H40c-3.3 0-6-2.7-6-6z" fill="#4a78dc"/>
+  </g>
 </svg>

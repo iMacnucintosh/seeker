@@ -18,6 +18,8 @@ Explorador de archivos **Material You** para [Sylphrena](https://github.com/iMac
 - **Arrastre** — mover/copiar entre carpetas; soltar en favoritos para anclar
 - **ZIP** — menú contextual → **Comprimir en ZIP** (uno o varios elementos de la misma carpeta; crea `nombre.zip` al lado, o `Comprimido.zip` si son varios; si el nombre ya existe añade la fecha y hora, p. ej. `Comprimido 2026-11-10 01.44.55.zip`, así nunca se pisan) y **Extraer aquí** sobre un `.zip` (también `.tar.gz/.xz/.bz2/.zst`, `.7z`, `.rar`). Corre en segundo plano con aviso de progreso y botón Cancelar, y en trabajos que tardan (más de ~0,7 s) una **barra de progreso en el borde inferior** con el porcentaje real (bytes leídos por `bsdtar` / tamaño total); usa `bsdtar` (libarchive). Un zip con una sola carpeta se extrae tal cual junto al archivo; si no, en una carpeta nueva con el nombre del archivo. Nunca sobrescribe (añade « (2)»), no deja archivos a medias si se cancela o falla y rechaza rutas inseguras (`..`).
 - **Previsualizaciones** — thumbs FreeDesktop (imágenes + `.thumbnailer` por MIME, p. ej. Blender); mosaico 2×2 en carpetas (opt-in)
+- **Vista rápida** (Espacio, como en macOS) — sale del icono del archivo y enseña solo el archivo: **imagen** con esquinas redondeadas; **vídeo** y **audio** reproduciéndose solos con una barra mínima (play/pausa, progreso y tiempo; el volumen es el del sistema; el audio con un icono de música); **PDF** página a página (botones, rueda, `RePág`/`AvPág`; las páginas las dibuja `pdftoppm` y se guardan en caché); **texto** con sus primeras líneas. Con las flechas pasa al archivo anterior o siguiente sin cerrarse. Una carpeta, un archivo de otro tipo o varios seleccionados abren **Propiedades**. Se cierra con Espacio, `Esc` o un clic fuera
+- **Actualización en vivo** — la carpeta abierta se actualiza sola cuando otra app añade, borra o cambia archivos (solo esa carpeta, sin recargarla entera: se conservan la selección y el scroll)
 - **Tamaño de iconos** — slider en ⋮ (5 pasos: 48–80 px; por defecto 64)
 - **Papelera** — el aviso superior muestra cuántos elementos hay y cuánto espacio ocupan (se calcula en segundo plano); «Vaciar papelera» lo repite en la confirmación
 - **Sonidos** — avisos del tema de sonido del sistema (`freedesktop`: comprimir `device-removed`, extraer `device-added`, error, papelera vaciada) con `pw-play`/`paplay`. Activados por defecto; se desactivan en ⋮ → **Sonidos**
@@ -28,6 +30,8 @@ Explorador de archivos **Material You** para [Sylphrena](https://github.com/iMac
 - **Portal** — FileChooser xdg-desktop-portal + stub `FileManager1`
 
 ## Build
+
+Necesita Qt 6 (`qt6-base`, `qt6-declarative`, `qt6-svg`, `qt6-wayland`, `qt6-multimedia` + `qt6-multimedia-ffmpeg` para la vista rápida de vídeo y audio) y `poppler` (`pdftoppm`/`pdfinfo`, para la de PDF).
 
 ```bash
 cd ~/Desarrollo/seeker

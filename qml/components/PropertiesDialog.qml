@@ -3,14 +3,11 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Effects
 
-Item {
+ModalLayer {
     id: root
-    anchors.fill: parent
-    visible: progress > 0.01
     z: 105
 
-    readonly property bool open: Properties.open
-    property real progress: open ? 1 : 0
+    open: Properties.open
     /// Custom / place Material badge for a single folder (same as FileCell).
     readonly property string folderBadge: {
         const _ = Browser.folderIconsRevision
@@ -21,13 +18,8 @@ Item {
         return Browser.folderSymbol(Properties.previewPath)
     }
 
-    Behavior on progress {
-        NumberAnimation {
-            duration: root.open ? 240 : 160
-            easing.type: root.open ? Easing.OutBack : Easing.InCubic
-            easing.overshoot: 1.12
-        }
-    }
+
+    onCloseRequested: root.close()
 
     function close() {
         Properties.close()
@@ -35,17 +27,7 @@ Item {
             win.contentItem.forceActiveFocus()
     }
 
-    Rectangle {
-        anchors.fill: parent
-        color: "#000000"
-        opacity: root.progress * 0.45
-    }
 
-    MouseArea {
-        anchors.fill: parent
-        enabled: root.open
-        onClicked: root.close()
-    }
 
     Rectangle {
         id: card

@@ -3,25 +3,14 @@ import QtQuick.Controls
 import QtQuick.Layouts
 
 // Modal Material Symbols picker — search + grid, same badge style as place watermarks.
-Item {
+ModalLayer {
     id: root
-    property bool open: false
     property string targetPath: ""
-    property real progress: open ? 1 : 0
     property string query: ""
     property var symbols: []
 
-    anchors.fill: parent
-    visible: progress > 0.01
     z: 110
 
-    Behavior on progress {
-        NumberAnimation {
-            duration: root.open ? 240 : 160
-            easing.type: root.open ? Easing.OutBack : Easing.InCubic
-            easing.overshoot: 1.12
-        }
-    }
 
     function begin(path) {
         targetPath = path
@@ -34,6 +23,8 @@ Item {
             searchField.selectAll()
         })
     }
+
+    onCloseRequested: root.close()
 
     function close() {
         open = false
@@ -59,17 +50,7 @@ Item {
         close()
     }
 
-    Rectangle {
-        anchors.fill: parent
-        color: "#000000"
-        opacity: root.progress * 0.45
-    }
 
-    MouseArea {
-        anchors.fill: parent
-        enabled: root.open
-        onClicked: root.close()
-    }
 
     Rectangle {
         id: card

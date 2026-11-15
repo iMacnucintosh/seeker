@@ -2,6 +2,11 @@
     <qresource prefix="/">
         <file>qml/Main.qml</file>
         <file>qml/components/IconButton.qml</file>
+        <file>qml/components/FileContextMenu.qml</file>
+        <file>qml/components/KeyBindings.qml</file>
+        <file>qml/components/NameDialog.qml</file>
+        <file>qml/components/EmptyTrashDialog.qml</file>
+        <file>qml/components/ModalLayer.qml</file>
         <file>qml/components/SidePlace.qml</file>
         <file>qml/components/PlacesRail.qml</file>
         <file>qml/components/BloomMenu.qml</file>
@@ -20,6 +25,7 @@
         <file>qml/components/TaskToast.qml</file>
         <file>qml/components/ProgressStrip.qml</file>
         <file>qml/components/OpenWithDialog.qml</file>
+        <file>qml/components/QuickLookView.qml</file>
         <file>data/seeker.svg</file>
         <file>data/material-symbols.txt</file>
         <file>i18n/es.json</file>
