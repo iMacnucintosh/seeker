@@ -8,6 +8,8 @@ pkgdesc="Material You file manager for the Sylenara shell"
 arch=('x86_64')
 url="https://github.com/iMacnucintosh/seeker"
 license=('GPL-3.0-only')
+# No debug package: nobody installs the symbols of this one
+options=('!debug')
 depends=('qt6-base' 'qt6-declarative>=6.9' 'qt6-svg' 'qt6-wayland' 'glib2' 'file' 'zip' 'qt6-multimedia' 'qt6-multimedia-ffmpeg' 'poppler')
 makedepends=('git')
 optdepends=('pipewire: sounds of the sound theme'

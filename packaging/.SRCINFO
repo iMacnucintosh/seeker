@@ -13,10 +13,14 @@ pkgbase = seeker-git
 	depends = glib2
 	depends = file
 	depends = zip
+	depends = qt6-multimedia
+	depends = qt6-multimedia-ffmpeg
+	depends = poppler
 	optdepends = pipewire: sounds of the sound theme
 	optdepends = sound-theme-freedesktop: the sounds themselves
 	optdepends = gvfs: trash and mounts of other devices
 	conflicts = seeker
+	options = !debug
 	source = git+https://github.com/iMacnucintosh/seeker.git
 	sha256sums = SKIP
 
