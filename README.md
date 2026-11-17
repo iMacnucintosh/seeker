@@ -3,7 +3,7 @@
 <p align="center"><strong>English</strong> · <a href="./README.es.md">Español</a></p>
 
 <p align="center">
-The <strong>Material You</strong> file manager of <a href="https://github.com/iMacnucintosh/lunele-shell">Lunele</a>: quick look on Space, a folder that refreshes by itself, ZIP in one click and the colours of your desktop, live.
+The <strong>Material You</strong> file manager of <a href="https://github.com/iMacnucintosh/sylenara-shell">Sylenara</a>: quick look on Space, a folder that refreshes by itself, ZIP in one click and the colours of your desktop, live.
 </p>
 
 <p align="center"><img src="docs/screenshot.webp" width="760" alt="Seeker with Quick Look showing a photo"></p>
@@ -30,12 +30,12 @@ The <strong>Material You</strong> file manager of <a href="https://github.com/iM
 - **Icons**: if the theme lacks the exact icon of a type, it uses the generic file one (and, without a theme, its own symbol); there is never a blank gap.
 - **Context menu**: open, properties, folder icon, open with…, compress/extract.
 - **Chrome**: the new folder / up / refresh buttons can be shown or hidden from ⋮.
-- **Theme**: Material You, live from Lunele (`theme.json`).
+- **Theme**: Material You, live from Sylenara (`theme.json`).
 - **Portal**: xdg-desktop-portal FileChooser + a `FileManager1` stub.
 
 ## Install
 
-It comes with Lunele: [its installer](https://github.com/iMacnucintosh/lunele-shell#installation) sets it up and makes it the file manager. On its own, on Arch Linux, add the [Lunele package repository](https://github.com/iMacnucintosh/lunele-packages) and install it with pacman:
+It comes with Sylenara: [its installer](https://github.com/iMacnucintosh/sylenara-shell#installation) sets it up and makes it the file manager. On its own, on Arch Linux, add the [Sylenara package repository](https://github.com/iMacnucintosh/sylenara-packages) and install it with pacman:
 
 ```sh
 sudo pacman -S seeker-git
@@ -53,9 +53,9 @@ make -j$(nproc)
 make install
 ```
 
-## Lunele integration
+## Sylenara integration
 
-- **Theme**: `scripts/lunele-quiet.py`, from Lunele, writes `~/.config/seeker/theme.json` with every apply, and Seeker reloads it live (colours, transparency and the animation speed of the shell).
+- **Theme**: `scripts/sylenara-quiet.py`, from Sylenara, writes `~/.config/seeker/theme.json` with every apply, and Seeker reloads it live (colours, transparency and the animation speed of the shell).
 - **File chooser portal**: so that other apps open Seeker to choose files:
 
   ```sh

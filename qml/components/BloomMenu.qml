@@ -1,9 +1,9 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import Lunele.Blobs
+import Sylenara.Blobs
 
-// Bloom ⋮ menu — visual = Lunele.Blobs; interaction on Overlay.
+// Bloom ⋮ menu — visual = Sylenara.Blobs; interaction on Overlay.
 // One panel MouseArea owns hover+click (per-row MouseAreas stole containsMouse
 // in the gaps, which closed the bloom / dropped the blob background mid-travel).
 Item {

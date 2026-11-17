@@ -4,7 +4,7 @@
 pkgname=seeker-git
 pkgver=0.0.0.r0.g0000000
 pkgrel=1
-pkgdesc="Material You file manager for the Lunele shell"
+pkgdesc="Material You file manager for the Sylenara shell"
 arch=('x86_64')
 url="https://github.com/iMacnucintosh/seeker"
 license=('GPL-3.0-only')
@@ -15,13 +15,13 @@ optdepends=('pipewire: sounds of the sound theme'
             'gvfs: trash and mounts of other devices')
 # /usr/bin/seeker would clash with the other `seeker` of the AUR (a disk benchmark)
 conflicts=('seeker')
-# LUNELE_REF=<tag> builds that release (the Lunele installer and its updates set it); without it, the latest commit
-source=("git+${url}.git${LUNELE_REF:+#tag=$LUNELE_REF}")
+# SYLENARA_REF=<tag> builds that release (the Sylenara installer and its updates set it); without it, the latest commit
+source=("git+${url}.git${SYLENARA_REF:+#tag=$SYLENARA_REF}")
 sha256sums=('SKIP')
 
 pkgver() {
   cd seeker
-  # The release it was built from (v0.1.2 → 0.1.2.r0.g…), which is what the Lunele updates compare with
+  # The release it was built from (v0.1.2 → 0.1.2.r0.g…), which is what the Sylenara updates compare with
   local described
   if described="$(git describe --tags --long --match 'v0.*' 2>/dev/null)"; then
     printf '%s' "$described" | sed 's/^v//;s/\([^-]*-g\)/r\1/;s/-/./g'

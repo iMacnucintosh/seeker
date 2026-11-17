@@ -2,7 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
-// Split pill — current view label + chevron menu (Lunele SplitButton shape).
+// Split pill — current view label + chevron menu (Sylenara SplitButton shape).
 // Hover + mouse wheel cycles grid → list → details.
 Item {
     id: root
@@ -104,7 +104,7 @@ Item {
         }
     }
 
-    // Same open motion as Lunele Menu (Idioma y región): opacity + yScale 0.1→1.
+    // Same open motion as Sylenara Menu (Idioma y región): opacity + yScale 0.1→1.
     MouseArea {
         id: dismiss
         parent: Overlay.overlay

@@ -687,7 +687,7 @@ void BrowserController::openTerminalHere(const QString &dir) {
         return QProcess::startDetached(bin, args);
     };
 
-    // Desktop default (Arch / portals), then kitty (Lunele default), then $TERMINAL.
+    // Desktop default (Arch / portals), then kitty (Sylenara default), then $TERMINAL.
     if (tryDetach(QStringLiteral("xdg-terminal-exec"),
                   {QStringLiteral("--working-directory=%1").arg(path)}))
         return;

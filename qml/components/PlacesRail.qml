@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 
-// Places rail — floating full-width pill (like Lunele filedialog Sidebar).
+// Places rail — floating full-width pill (like Sylenara filedialog Sidebar).
 // MaterialShape stays on square chrome (⋮, orbs); unit-square shapes stretch
 // into blobs when forced into a wide nav row.
 // Drop folders onto empty rail chrome to pin; drop onto a SidePlace still moves into it.

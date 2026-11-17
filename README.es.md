@@ -3,7 +3,7 @@
 <p align="center"><a href="./README.md">English</a> · <strong>Español</strong></p>
 
 <p align="center">
-El explorador de archivos <strong>Material You</strong> de <a href="https://github.com/iMacnucintosh/lunele-shell">Lunele</a>: vista rápida con Espacio, una carpeta que se actualiza sola, ZIP en un clic y los colores de tu escritorio, en vivo.
+El explorador de archivos <strong>Material You</strong> de <a href="https://github.com/iMacnucintosh/sylenara-shell">Sylenara</a>: vista rápida con Espacio, una carpeta que se actualiza sola, ZIP en un clic y los colores de tu escritorio, en vivo.
 </p>
 
 <p align="center"><img src="docs/screenshot.webp" width="760" alt="Seeker con la vista rápida enseñando una foto"></p>
@@ -30,12 +30,12 @@ El explorador de archivos <strong>Material You</strong> de <a href="https://gith
 - **Iconos**: si el tema no tiene el icono exacto de un tipo, usa el genérico de archivo (y, sin tema, un símbolo propio); nunca queda un hueco en blanco.
 - **Menú contextual**: abrir, propiedades, icono de carpeta, abrir con…, comprimir/extraer.
 - **Chrome**: los botones nueva carpeta / subir / actualizar se pueden mostrar u ocultar desde ⋮.
-- **Tema**: Material You en vivo desde Lunele (`theme.json`).
+- **Tema**: Material You en vivo desde Sylenara (`theme.json`).
 - **Portal**: FileChooser de xdg-desktop-portal + un stub de `FileManager1`.
 
 ## Instalación
 
-Viene con Lunele: [su instalador](https://github.com/iMacnucintosh/lunele-shell/blob/main/README.es.md#instalación) lo instala y lo deja como explorador de archivos. Por separado, en Arch Linux, añade el [repositorio de paquetes de Lunele](https://github.com/iMacnucintosh/lunele-packages) e instálalo con pacman:
+Viene con Sylenara: [su instalador](https://github.com/iMacnucintosh/sylenara-shell/blob/main/README.es.md#instalación) lo instala y lo deja como explorador de archivos. Por separado, en Arch Linux, añade el [repositorio de paquetes de Sylenara](https://github.com/iMacnucintosh/sylenara-packages) e instálalo con pacman:
 
 ```sh
 sudo pacman -S seeker-git
@@ -53,9 +53,9 @@ make -j$(nproc)
 make install
 ```
 
-## Integración con Lunele
+## Integración con Sylenara
 
-- **Tema**: `scripts/lunele-quiet.py`, de Lunele, escribe `~/.config/seeker/theme.json` en cada apply, y Seeker lo recarga en caliente (colores, transparencia y velocidad de animación de la shell).
+- **Tema**: `scripts/sylenara-quiet.py`, de Sylenara, escribe `~/.config/seeker/theme.json` en cada apply, y Seeker lo recarga en caliente (colores, transparencia y velocidad de animación de la shell).
 - **Portal de selección de archivos**: para que otras apps abran Seeker al elegir archivos:
 
   ```sh
