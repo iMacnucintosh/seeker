@@ -1,13 +1,13 @@
 pkgbase = seeker-git
-	pkgdesc = Material You file manager for the Sylphrena shell
+	pkgdesc = Material You file manager for the Sylenara shell
 	pkgver = 0.0.0.r0.g0000000
 	pkgrel = 1
 	url = https://github.com/iMacnucintosh/seeker
 	arch = x86_64
-	license = MIT
+	license = GPL-3.0-only
 	makedepends = git
 	depends = qt6-base
-	depends = qt6-declarative
+	depends = qt6-declarative>=6.9
 	depends = qt6-svg
 	depends = qt6-wayland
 	depends = glib2

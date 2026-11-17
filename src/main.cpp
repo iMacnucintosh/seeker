@@ -92,10 +92,10 @@ private:
     PickController *m_pick = nullptr;
 };
 
-void loadSylphrenaUiFont() {
+void loadSylenaraUiFont() {
     const QStringList candidates = {
         QDir::home().filePath(QStringLiteral(
-            ".config/quickshell/sylphrena/assets/google-sans-flex/"
+            ".config/quickshell/sylenara/assets/google-sans-flex/"
             "GoogleSansFlex-VariableFont_GRAD,ROND,opsz,slnt,wdth,wght.ttf")),
         QDir::home().filePath(QStringLiteral(
             ".local/share/seeker/fonts/GoogleSansFlex.ttf")),
@@ -126,13 +126,13 @@ int main(int argc, char *argv[]) {
     qputenv("QT_QUICK_CONTROLS_STYLE", "Basic");
     QGuiApplication app(argc, argv);
     installTranslation(app);
-    app.setOrganizationName(QStringLiteral("Sylphrena"));
+    app.setOrganizationName(QStringLiteral("Sylenara"));
     app.setApplicationName(QStringLiteral("Seeker"));
     app.setApplicationDisplayName(QCoreApplication::translate("Seeker", "Files"));
     app.setDesktopFileName(QStringLiteral("seeker"));
     app.setWindowIcon(QIcon::fromTheme(QStringLiteral("system-file-manager"),
                                        QIcon(QStringLiteral(":/data/seeker.svg"))));
-    loadSylphrenaUiFont();
+    loadSylenaraUiFont();
 
     QCommandLineParser parser;
     parser.setApplicationDescription(QStringLiteral("Seeker — Material You file manager"));
@@ -165,7 +165,7 @@ int main(int argc, char *argv[]) {
 
     const bool pickMode = parser.isSet(QStringLiteral("pick"));
 
-    // Allow translucent window buffers (Sylphrena transparency → Hyprland blur).
+    // Allow translucent window buffers (Sylenara transparency → Hyprland blur).
     QQuickWindow::setDefaultAlphaBuffer(true);
 
     Theme theme;

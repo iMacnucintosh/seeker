@@ -1,8 +1,8 @@
 import QtQuick
 import QtQuick.Controls
-import Sylphrena.Blobs
+import Sylenara.Blobs
 
-// Bloom context menu — same Sylphrena.Blobs morph as BloomMenu ⋮, seeded at the pointer.
+// Bloom context menu — same Sylenara.Blobs morph as BloomMenu ⋮, seeded at the pointer.
 // Host stays laid out (parked off-screen). Open always blooms from seed to a frozen size so
 // mid-flight reflows / reopen-while-closing cannot stall the blob halfway.
 Item {
