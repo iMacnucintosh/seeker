@@ -99,16 +99,25 @@ QColor Theme::layer(const QColor &c, int layer) const {
     if (layer <= 0)
         return withAlpha(c);
 
-    // Port of Colours.alterColour() from the shell.
+    // Every layer above the base one steps away from the surface colour. In dark mode they all get lighter; in light
+    // mode the first one lifts towards white and the deeper ones sink. The step grows as the window gets more
+    // transparent and as the wallpaper behind it gets brighter.
     const bool light = m_mode == QLatin1String("light");
-    const qreal r = c.redF(), g = c.greenF(), b = c.blueF();
-    const qreal lum = (r == 0 && g == 0 && b == 0) ? 0.0 : std::sqrt(0.299 * r * r + 0.587 * g * g + 0.114 * b * b);
-    const qreal factor = (!light || layer == 1) ? 1.0 : -layer / 2.0;
-    const qreal offset = factor * (light ? 0.2 : 0.3) * (1.0 - m_transparencyBase)
-                         * (1.0 + m_wallLuminance * (light ? (layer == 1 ? 3.0 : 1.0) : 2.5));
-    const qreal scale = lum > 0 ? (lum + offset) / lum : 1.0;
-    auto clamp = [](qreal v) { return qBound(0.0, v, 1.0); };
-    return QColor::fromRgbF(clamp(r * scale), clamp(g * scale), clamp(b * scale), qBound(0.0, m_transparencyLayers, 1.0));
+    const qreal open = 1.0 - m_transparencyBase;
+    const qreal wall = m_wallLuminance;
+    QColor out;
+    if (light && layer >= 2) {
+        const qreal keep = 1.0 - 0.108 * layer * open * (1.0 + wall);
+        out = QColor::fromRgbF(qBound(0.0, c.redF() * keep, 1.0), qBound(0.0, c.greenF() * keep, 1.0),
+                               qBound(0.0, c.blueF() * keep, 1.0));
+    } else {
+        const qreal lift = open * (light ? 0.20 + 0.60 * wall : 0.30 + 0.75 * wall);
+        float hue = 0, sat = 0, lightness = 0;
+        c.getHslF(&hue, &sat, &lightness);
+        out = QColor::fromHslF(qMax(hue, 0.0f), sat, float(qBound(0.0, lightness + lift, 1.0)));
+    }
+    out.setAlphaF(qBound(0.0, m_transparencyLayers, 1.0));
+    return out;
 }
 
 void Theme::applyDefaults() {
