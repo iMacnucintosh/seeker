@@ -111,6 +111,8 @@ Item {
                 return pageImg.status === Image.Ready ? Qt.size(pageImg.implicitWidth, pageImg.implicitHeight) : stage.lastPage
             case "text":
                 return Qt.size(Math.min(900, root.maxW), Math.min(root.maxH, textBody.implicitHeight + 48))
+            case "markdown":
+                return Qt.size(Math.min(820, root.maxW), Math.min(root.maxH, mdBody.implicitHeight + 64))
             default:
                 return Qt.size(300, 260)
             }
@@ -118,7 +120,7 @@ Item {
         // While the next page renders the box keeps the size of the last one (A4 before the first)
         property size lastPage: Qt.size(1600, 2263)
         readonly property real fit: Math.min(1, root.maxW / Math.max(1, natural.width), root.maxH / Math.max(1, natural.height))
-        readonly property bool isCard: root.kind === "audio" || root.kind === "text" || root.kind === "other"
+        readonly property bool isCard: root.kind === "audio" || root.kind === "text" || root.kind === "markdown" || root.kind === "other"
 
         width: Math.round(natural.width * fit)
         height: Math.round(natural.height * fit)
@@ -305,6 +307,43 @@ Item {
                 font.family: "monospace"
                 font.pixelSize: 13
                 lineHeight: 1.15
+            }
+        }
+
+        // Markdown: formatted as a document (headings, lists, tables, code, links and the images next to the file)
+        Flickable {
+            id: mdView
+            anchors.fill: parent
+            anchors.margins: 32
+            visible: root.kind === "markdown"
+            clip: true
+            contentWidth: width
+            contentHeight: mdBody.implicitHeight
+            boundsBehavior: Flickable.StopAtBounds
+
+            // TextEdit, read only: a Text loading the images next to the file hung the window; this one also lets
+            // the text be selected and copied
+            TextEdit {
+                id: mdBody
+                width: mdView.width
+                text: root.kind === "markdown"
+                      ? QuickLook.markdownHtml(QuickLook.text, Theme.onSurface, Theme.onSurfaceVariant, Theme.primary,
+                                               Qt.alpha(Theme.onSurface, 0.07), Qt.alpha(Theme.outline, 0.6))
+                      : ""
+                textFormat: TextEdit.RichText
+                wrapMode: TextEdit.Wrap
+                readOnly: true
+                selectByMouse: true
+                color: Theme.onSurface
+                selectionColor: Theme.primary
+                font.pixelSize: 14
+                // Relative images and links are next to the file
+                baseUrl: QuickLook.path ? "file://" + QuickLook.path.substring(0, QuickLook.path.lastIndexOf("/") + 1) : ""
+                onLinkActivated: link => Qt.openUrlExternally(link)
+
+                HoverHandler {
+                    cursorShape: mdBody.hoveredLink ? Qt.PointingHandCursor : Qt.IBeamCursor
+                }
             }
         }
 
