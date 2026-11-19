@@ -13,7 +13,7 @@ class QuickLookController : public QObject {
     Q_PROPERTY(bool open READ open NOTIFY openChanged)
     Q_PROPERTY(QString path READ path NOTIFY changed)
     Q_PROPERTY(QString name READ name NOTIFY changed)
-    /// "image", "video", "audio", "pdf", "text" or "other" (only while moving with the arrows)
+    /// "image", "video", "audio", "pdf", "markdown", "text" or "other" (only while moving with the arrows)
     Q_PROPERTY(QString kind READ kind NOTIFY changed)
     Q_PROPERTY(QString iconName READ iconName NOTIFY changed)
     Q_PROPERTY(QString text READ text NOTIFY changed)
@@ -39,6 +39,10 @@ public:
     /// What a file would show: one of the kinds above, "other" when there is no preview for it
     Q_INVOKABLE QString kindOf(const QString &path) const;
     /// Opens (or moves) the preview to path. A file without a preview shows as "other" (icon and name).
+    /// Markdown as rich text with the app's colours: spacing between blocks, headings with room, code in a monospace
+    /// font on a soft background, quotes indented and muted, links in the accent colour, tables with soft borders
+    Q_INVOKABLE QString markdownHtml(const QString &markdown, const QColor &text, const QColor &muted,
+                                     const QColor &accent, const QColor &codeBackground, const QColor &rule) const;
     Q_INVOKABLE void show(const QString &path);
     Q_INVOKABLE void close();
     Q_INVOKABLE void setPage(int page);

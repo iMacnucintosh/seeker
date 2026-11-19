@@ -8,6 +8,13 @@
 #include <QRegularExpression>
 #include <QStandardPaths>
 #include <QStringDecoder>
+#include <QFontDatabase>
+#include <QFontInfo>
+#include <QTextBlock>
+#include <QTextCursor>
+#include <QTextDocument>
+#include <QTextFrame>
+#include <QTextTable>
 #include <QtConcurrent/QtConcurrentRun>
 
 namespace {
@@ -70,9 +77,104 @@ QString QuickLookController::kindOf(const QString &path) const {
     if (name == QLatin1String("application/pdf"))
         return QStandardPaths::findExecutable(QStringLiteral("pdftoppm")).isEmpty() ? QStringLiteral("other")
                                                                                        : QStringLiteral("pdf");
+    // Markdown is shown formatted (headings, lists, tables, code, images next to it)
+    if (name == QLatin1String("text/markdown") || mime.inherits(QStringLiteral("text/markdown")))
+        return QStringLiteral("markdown");
     if (isTextMime(mime))
         return QStringLiteral("text");
     return QStringLiteral("other");
+}
+
+QString QuickLookController::markdownHtml(const QString &markdown, const QColor &text, const QColor &muted,
+                                         const QColor &accent, const QColor &codeBackground, const QColor &rule) const {
+    QTextDocument doc;
+    doc.setMarkdown(markdown, QTextDocument::MarkdownDialectGitHub);
+    // A real monospace family: the platform's "fixed font" can come back as a proportional one (Noto Sans here), so
+    // ask fontconfig for a monospace face instead
+    QFont monoQuery(QStringLiteral("monospace"));
+    monoQuery.setStyleHint(QFont::Monospace);
+    monoQuery.setFixedPitch(true);
+    const QStringList mono{QFontInfo(monoQuery).family(), QStringLiteral("monospace")};
+
+    struct Span {
+        int from, length;
+        QTextCharFormat format;
+    };
+    QList<Span> spans;
+    for (QTextBlock block = doc.begin(); block.isValid(); block = block.next()) {
+        QTextBlockFormat bf = block.blockFormat();
+        const int heading = bf.headingLevel();
+        const bool code = bf.hasProperty(QTextFormat::BlockCodeFence) || bf.nonBreakableLines();
+        const bool quote = bf.hasProperty(QTextFormat::BlockQuoteLevel) && bf.intProperty(QTextFormat::BlockQuoteLevel) > 0;
+        if (heading > 0) {
+            bf.setTopMargin(heading <= 2 ? 20 : 14);
+            bf.setBottomMargin(heading == 1 ? 10 : 6);
+        } else if (code) {
+            // One block per line: only the outer ones get room, so the code reads as one box
+            const bool prevCode = block.previous().isValid() && block.previous().blockFormat().nonBreakableLines();
+            const bool nextCode = block.next().isValid() && block.next().blockFormat().nonBreakableLines();
+            bf.setTopMargin(prevCode ? 0 : 6);
+            bf.setBottomMargin(nextCode ? 0 : 10);
+            bf.setBackground(codeBackground);
+            bf.setLeftMargin(0);
+            bf.setTextIndent(10);
+        } else if (block.textList()) {
+            // List items close together; the list as a whole gets room after it
+            const bool nextInList = block.next().isValid() && block.next().textList();
+            bf.setTopMargin(0);
+            bf.setBottomMargin(nextInList ? 2 : 8);
+        } else {
+            bf.setBottomMargin(8);
+        }
+        if (quote)
+            bf.setLeftMargin(18 * bf.intProperty(QTextFormat::BlockQuoteLevel));
+        // Code lines touch, so the box reads as one; the rest breathes a little
+        bf.setLineHeight(code ? 100 : 120, QTextBlockFormat::ProportionalHeight);
+        QTextCursor(block).setBlockFormat(bf);
+
+        for (auto it = block.begin(); !it.atEnd(); ++it) {
+            const QTextFragment fragment = it.fragment();
+            if (!fragment.isValid())
+                continue;
+            QTextCharFormat cf = fragment.charFormat();
+            if (cf.isImageFormat())
+                continue;
+            cf.setForeground(quote ? muted : text);
+            if (cf.isAnchor()) {
+                cf.setForeground(accent);
+                cf.setFontUnderline(false);
+            }
+            if (code || cf.fontFixedPitch()) {
+                cf.setFontFamilies(mono);
+                cf.setFontFixedPitch(true);
+                if (!code)
+                    cf.setBackground(codeBackground);
+            }
+            if (heading > 0)
+                cf.setFontWeight(QFont::Bold);
+            spans.append({fragment.position(), fragment.length(), cf});
+        }
+    }
+    for (const Span &span : spans) {
+        QTextCursor cursor(&doc);
+        cursor.setPosition(span.from);
+        cursor.setPosition(span.from + span.length, QTextCursor::KeepAnchor);
+        cursor.setCharFormat(span.format);
+    }
+
+    // Tables: soft borders and room inside the cells
+    for (QTextFrame *frame : doc.rootFrame()->childFrames()) {
+        if (auto *table = qobject_cast<QTextTable *>(frame)) {
+            QTextTableFormat tf = table->format();
+            tf.setBorderBrush(rule);
+            tf.setBorder(1);
+            tf.setBorderCollapse(true);
+            tf.setCellPadding(6);
+            tf.setBottomMargin(10);
+            table->setFormat(tf);
+        }
+    }
+    return doc.toHtml();
 }
 
 void QuickLookController::show(const QString &path) {
@@ -93,7 +195,7 @@ void QuickLookController::show(const QString &path) {
     const QMimeType mime = fi.isDir() ? db.mimeTypeForName(QStringLiteral("inode/directory")) : db.mimeTypeForFile(fi);
     m_iconName = fi.isDir() ? QStringLiteral("folder") : mime.iconName();
 
-    if (m_kind == QLatin1String("text")) {
+    if (m_kind == QLatin1String("text") || m_kind == QLatin1String("markdown")) {
         QFile f(m_path);
         if (f.open(QIODevice::ReadOnly)) {
             const QByteArray bytes = f.read(kTextBytes);
